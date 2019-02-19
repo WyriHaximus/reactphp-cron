@@ -3,7 +3,8 @@
     "name": "wyrihaximus/react-cron",
     "require": {
         "php": "^7.2",
-        "dragonmantank/cron-expression": "^2.2"
+        "dragonmantank/cron-expression": "^2.2",
+        "react/event-loop": "^1.1"
     },
     "require-dev": {
         "api-clients/test-utilities": "^5.4"
