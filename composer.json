@@ -16,12 +16,12 @@
     },
     "autoload": {
         "psr-4": {
-            "ReactiveApps\\Command\\Cron\\": "src/"
+            "WyriHaximus\\React\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "ReactiveApps\\Tests\\Command\\Cron\\": "tests/"
+            "WyriHaximus\\Tests\\React\\": "tests/"
         }
     },
     "scripts": {
