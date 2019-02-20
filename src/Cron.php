@@ -6,38 +6,25 @@ use React\EventLoop\LoopInterface;
 
 final class Cron
 {
-    /** @var LoopInterface */
-    private $loop;
-
     /** @var ActionInterface[] */
     private $actions;
 
     /**
-     * @param LoopInterface     $loop
-     * @param ActionInterface[] $actions
+     * @param SchedulerInterface $scheduler
+     * @param ActionInterface[]  $actions
      */
-    private function __construct(LoopInterface $loop, ActionInterface ...$actions)
+    private function __construct(SchedulerInterface $scheduler, ActionInterface ...$actions)
     {
-        $this->loop = $loop;
         $this->actions = $actions;
 
-        $this->schedule();
+        $scheduler->schedule(function (): void {
+            $this->tick();
+        });
     }
 
     public static function create(LoopInterface $loop, ActionInterface ...$actions)
     {
-        return new self($loop, ...$actions);
-    }
-
-    private function schedule(): void
-    {
-        // Tick every 60 seconds
-        $this->loop->addPeriodicTimer(60, function (): void {
-            $this->tick();
-        });
-
-        // Initial tick because some actions might want to run in this minute
-        $this->tick();
+        return new self(new Scheduler($loop), ...$actions);
     }
 
     private function tick(): void
