@@ -1,6 +1,7 @@
 {
     "license": "MIT",
     "name": "wyrihaximus/react-cron",
+    "description": "Cronlike scheduler running inside a ReactPHP Event Loop",
     "require": {
         "php": "^7.2",
         "dragonmantank/cron-expression": "^2.2",
