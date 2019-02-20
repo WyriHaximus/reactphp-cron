@@ -4,7 +4,7 @@ namespace WyriHaximus\React;
 
 use Cron\CronExpression;
 
-final class Action
+final class Action implements ActionInterface
 {
     /** @var CronExpression */
     private $expression;

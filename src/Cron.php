@@ -9,14 +9,14 @@ final class Cron
     /** @var LoopInterface */
     private $loop;
 
-    /** @var Action[] */
+    /** @var ActionInterface[] */
     private $actions;
 
     /**
-     * @param LoopInterface $loop
-     * @param Action[]      $actions
+     * @param LoopInterface     $loop
+     * @param ActionInterface[] $actions
      */
-    private function __construct(LoopInterface $loop, Action ...$actions)
+    private function __construct(LoopInterface $loop, ActionInterface ...$actions)
     {
         $this->loop = $loop;
         $this->actions = $actions;
@@ -24,7 +24,7 @@ final class Cron
         $this->schedule();
     }
 
-    public static function create(LoopInterface $loop, Action ...$actions)
+    public static function create(LoopInterface $loop, ActionInterface ...$actions)
     {
         return new self($loop, ...$actions);
     }
