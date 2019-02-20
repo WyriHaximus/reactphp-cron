@@ -23,7 +23,7 @@ final class CronTest extends TestCase
             $ran = true;
         });
 
-        new Cron($loop->reveal(), $action);
+        Cron::create($loop->reveal(), $action);
 
         self::assertTrue($ran);
     }

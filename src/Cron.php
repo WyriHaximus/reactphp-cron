@@ -13,16 +13,20 @@ final class Cron
     private $actions;
 
     /**
-     * Cron constructor.
      * @param LoopInterface $loop
      * @param Action[]      $actions
      */
-    public function __construct(LoopInterface $loop, Action ...$actions)
+    private function __construct(LoopInterface $loop, Action ...$actions)
     {
         $this->loop = $loop;
         $this->actions = $actions;
 
         $this->schedule();
+    }
+
+    public static function create(LoopInterface $loop, Action ...$actions)
+    {
+        return new self($loop, ...$actions);
     }
 
     private function schedule(): void
