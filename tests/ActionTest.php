@@ -12,7 +12,7 @@ final class ActionTest extends TestCase
 {
     public function testIsDue(): void
     {
-        $action = new Action('* * * * *', function (): void {
+        $action = new Action('name', '* * * * *', function (): void {
         });
 
         self::assertTrue($action->isDue());
@@ -21,7 +21,7 @@ final class ActionTest extends TestCase
     public function testPerform(): void
     {
         $ran = false;
-        $action = new Action('* * * * *', function () use (&$ran): void {
+        $action = new Action('name', '* * * * *', function () use (&$ran): void {
             $ran = true;
         });
 

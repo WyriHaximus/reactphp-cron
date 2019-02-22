@@ -3,19 +3,26 @@
 namespace WyriHaximus\React;
 
 use React\EventLoop\LoopInterface;
+use WyriHaximus\React\Mutex\Memory;
+use WyriHaximus\React\Mutex\MutexInterface;
 
 final class Cron
 {
     /** @var ActionInterface[] */
     private $actions;
 
+    /** @var MutexInterface */
+    private $mutex;
+
     /**
      * @param SchedulerInterface $scheduler
+     * @param MutexInterface     $mutex
      * @param ActionInterface[]  $actions
      */
-    private function __construct(SchedulerInterface $scheduler, ActionInterface ...$actions)
+    private function __construct(SchedulerInterface $scheduler, MutexInterface $mutex, ActionInterface ...$actions)
     {
         $this->actions = $actions;
+        $this->mutex = $mutex;
 
         $scheduler->schedule(function (): void {
             $this->tick();
@@ -24,15 +31,30 @@ final class Cron
 
     public static function create(LoopInterface $loop, ActionInterface ...$actions)
     {
-        return new self(new Scheduler($loop), ...$actions);
+        return new self(new Scheduler($loop), new Memory(), ...$actions);
     }
 
     private function tick(): void
     {
         foreach ($this->actions as $action) {
-            if ($action->isDue() === true) {
-                $action->perform();
-            }
+            $this->perform($action);
         }
+    }
+
+    private function perform(ActionInterface $action): void
+    {
+        if ($action->isDue() === false) {
+            return;
+        }
+
+        $this->mutex->acquire($action->getKey())->then(function ($lock) use ($action) {
+            if ($lock === false) {
+                return;
+            }
+
+            return $action->perform()->then(function () use ($action, $lock) {
+                return $this->mutex->release($lock);
+            });
+        })->done();
     }
 }

@@ -3,9 +3,14 @@
 namespace WyriHaximus\React;
 
 use Cron\CronExpression;
+use React\Promise\PromiseInterface;
+use function React\Promise\resolve;
 
 final class Action implements ActionInterface
 {
+    /** @var string */
+    private $key;
+
     /** @var CronExpression */
     private $expression;
 
@@ -13,13 +18,20 @@ final class Action implements ActionInterface
     private $performer;
 
     /**
+     * @param string   $key
      * @param string   $expression
      * @param callable $performer
      */
-    public function __construct(string $expression, callable $performer)
+    public function __construct(string $key, string $expression, callable $performer)
     {
+        $this->key = $key;
         $this->expression = CronExpression::factory($expression);
         $this->performer = $performer;
+    }
+
+    public function getKey(): string
+    {
+        return $this->key;
     }
 
     public function isDue(): bool
@@ -27,8 +39,10 @@ final class Action implements ActionInterface
         return $this->expression->isDue();
     }
 
-    public function perform(): void
+    public function perform(): PromiseInterface
     {
-        ($this->performer)();
+        return resolve(
+            ($this->performer)()
+        );
     }
 }

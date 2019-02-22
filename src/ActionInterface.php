@@ -2,6 +2,8 @@
 
 namespace WyriHaximus\React;
 
+use React\Promise\PromiseInterface;
+
 interface ActionInterface
 {
     /**
@@ -12,7 +14,7 @@ interface ActionInterface
     public function isDue(): bool;
 
     /**
-     * Run the action.
+     * Run the action returning a promise which should resolve when the action has been completed.
      */
-    public function perform(): void;
+    public function perform(): PromiseInterface;
 }

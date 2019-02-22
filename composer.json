@@ -5,7 +5,9 @@
     "require": {
         "php": "^7.2",
         "dragonmantank/cron-expression": "^2.2",
-        "react/event-loop": "^1.1"
+        "react/event-loop": "^1.1",
+        "react/promise": "^2.7",
+        "wyrihaximus/react-mutex": "dev-master"
     },
     "require-dev": {
         "api-clients/test-utilities": "^5.4"

@@ -28,7 +28,7 @@ final class CronFunctionalTest extends TestCase
 
         $ran = false;
         $ranTimes = 0;
-        $action = new Action('* * * * *', function () use (&$ran, &$ranTimes, $loop): void {
+        $action = new Action('name', '* * * * *', function () use (&$ran, &$ranTimes, $loop): void {
             $ran = true;
             $ranTimes++;
 
@@ -38,6 +38,35 @@ final class CronFunctionalTest extends TestCase
         });
 
         Cron::$factoryMethod($loop, $action);
+        $loop->run();
+
+        self::assertTrue($ran);
+        self::assertSame(2, $ranTimes);
+    }
+
+    /**
+     * @param string $factoryMethod
+     *
+     * @dataProvider provideFactoryMethods
+     */
+    public function testMutexLockOnlyAllowsTheSameActionOnce(string $factoryMethod): void
+    {
+        $loop = Factory::create();
+
+        $ran = false;
+        $ranTimes = 0;
+        $action = new Action('name', '* * * * *', function () use (&$ran, &$ranTimes, $loop): void {
+            $loop->futureTick(function () use (&$ran, &$ranTimes, $loop): void {
+                $ran = true;
+                $ranTimes++;
+
+                if ($ranTimes >= 2) {
+                    $loop->stop();
+                }
+            });
+        });
+
+        Cron::$factoryMethod($loop, $action, $action);
         $loop->run();
 
         self::assertTrue($ran);
