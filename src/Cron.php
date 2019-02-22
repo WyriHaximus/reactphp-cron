@@ -34,6 +34,11 @@ final class Cron
         return new self(new Scheduler($loop), new Memory(), ...$actions);
     }
 
+    public static function createHighPrecision(LoopInterface $loop, ActionInterface ...$actions)
+    {
+        return new self(new HighPrecisionScheduler($loop), new Memory(), ...$actions);
+    }
+
     private function tick(): void
     {
         foreach ($this->actions as $action) {

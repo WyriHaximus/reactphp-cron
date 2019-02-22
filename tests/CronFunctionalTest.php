@@ -15,6 +15,7 @@ final class CronFunctionalTest extends TestCase
     public function provideFactoryMethods(): iterable
     {
         yield 'default' => ['create'];
+        yield 'high_precision' => ['createHighPrecision'];
     }
 
     /**
