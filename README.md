@@ -43,6 +43,26 @@ Cron::create(
 );
 ```
 
+# Factory methods
+
+* `Cron::create($loop, ...$actions)`: Cron using basic scheduler ticking every 60 seconds and with in-memory mutex.
+* `Cron::createHighPrecision($loop, ...$actions)`: Cron using a high precision scheduler and with in-memory mutex.
+* `Cron::createWithMutex($loop, $mutex, ...$actions)`: Cron using basic scheduler ticking every 60 seconds and with supplied mutex.
+* `Cron::creatHighPrecisioneWithMutex($loop, $mutex, ...$actions)`: Cron using a high precision scheduler ticking every 60 seconds and with supplied mutex.
+
+# Schedulers 
+
+This package comes with two schedulers, both of which will tick every minute and the moment a new callable is registered to it:
+
+* Basic scheduler: Will tick every 60 seconds regardless of what second of the minute it is.
+* High precision scheduler: Will ALWAYS tick in the first second of the minute, it will readjust when it deviates out of 
+that first second to in the first second next minute.
+
+# Mutex
+
+All mutexes must implement [`wyrihaximus/react-mutex`](https://packagist.org/packages/wyrihaximus/react-mutex) to provide 
+additional implementations beyond the default in memory one. This is meant to do distributed locking of cron jobs.
+
 # License
 
 The MIT License (MIT)
