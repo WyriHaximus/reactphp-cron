@@ -39,6 +39,16 @@ final class Cron
         return new self(new HighPrecisionScheduler($loop), new Memory(), ...$actions);
     }
 
+    public static function createWithMutex(LoopInterface $loop, MutexInterface $mutex, ActionInterface ...$actions)
+    {
+        return new self(new Scheduler($loop), $mutex, ...$actions);
+    }
+
+    public static function createHighPrecisionWithMutex(LoopInterface $loop, MutexInterface $mutex, ActionInterface ...$actions)
+    {
+        return new self(new HighPrecisionScheduler($loop), $mutex, ...$actions);
+    }
+
     private function tick(): void
     {
         foreach ($this->actions as $action) {
