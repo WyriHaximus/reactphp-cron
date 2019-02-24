@@ -5,7 +5,6 @@
 [![Total Downloads](https://poser.pugx.org/WyriHaximus/react-cron/downloads.png)](https://packagist.org/packages/WyriHaximus/react-cron)
 [![Code Coverage](https://scrutinizer-ci.com/g/WyriHaximus/reactphp-cron/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/WyriHaximus/reactphp-cron/?branch=master)
 [![License](https://poser.pugx.org/WyriHaximus/react-cron/license.png)](https://packagist.org/packages/WyriHaximus/react-cron)
-[![PHP 7 ready](http://php7ready.timesplinter.ch/WyriHaximus/reactphp-http-middleware-clear-body/badge.svg)](https://travis-ci.org/WyriHaximus/reactphp-http-middleware-clear-body)
 
 # Install
 
