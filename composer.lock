@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9f26aa9b5b59bb38bfb408b963bfa180",
+    "content-hash": "f5b3653222e6a34714136352e3c333bd",
     "packages": [
         {
             "name": "clue/block-react",
@@ -251,16 +251,16 @@
         },
         {
             "name": "wyrihaximus/react-mutex",
-            "version": "dev-master",
+            "version": "1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/WyriHaximus/reactphp-mutex.git",
-                "reference": "a654f4d7f041c49bcf9386e6f2114f27fb7ad1bf"
+                "reference": "9a327c6c8a5c113219ee68eb3a6169b3efebd2bd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/reactphp-mutex/zipball/a654f4d7f041c49bcf9386e6f2114f27fb7ad1bf",
-                "reference": "a654f4d7f041c49bcf9386e6f2114f27fb7ad1bf",
+                "url": "https://api.github.com/repos/WyriHaximus/reactphp-mutex/zipball/9a327c6c8a5c113219ee68eb3a6169b3efebd2bd",
+                "reference": "9a327c6c8a5c113219ee68eb3a6169b3efebd2bd",
                 "shasum": ""
             },
             "require": {
@@ -282,7 +282,7 @@
                 "MIT"
             ],
             "description": "Mutex locking for ReactPHP projects",
-            "time": "2019-02-21T21:45:50+00:00"
+            "time": "2019-02-25T20:23:01+00:00"
         }
     ],
     "packages-dev": [
@@ -5006,9 +5006,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "wyrihaximus/react-mutex": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
