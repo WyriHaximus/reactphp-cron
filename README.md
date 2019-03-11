@@ -47,7 +47,7 @@ Cron::create(
 * `Cron::create($loop, ...$actions)`: Cron using basic scheduler ticking every 60 seconds and with in-memory mutex.
 * `Cron::createHighPrecision($loop, ...$actions)`: Cron using a high precision scheduler and with in-memory mutex.
 * `Cron::createWithMutex($loop, $mutex, ...$actions)`: Cron using basic scheduler ticking every 60 seconds and with supplied mutex.
-* `Cron::creatHighPrecisioneWithMutex($loop, $mutex, ...$actions)`: Cron using a high precision scheduler ticking every 60 seconds and with supplied mutex.
+* `Cron::createHighPrecisionWithMutex($loop, $mutex, ...$actions)`: Cron using a high precision scheduler ticking every 60 seconds and with supplied mutex.
 
 # Schedulers 
 
