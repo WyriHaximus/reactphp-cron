@@ -4,7 +4,7 @@
     "description": "Cronlike scheduler running inside a ReactPHP Event Loop",
     "require": {
         "php": "^7.2",
-        "dragonmantank/cron-expression": "^2.2",
+        "dragonmantank/cron-expression": "^2.2 || ^3.0",
         "react/event-loop": "^1.1",
         "react/promise": "^2.7",
         "wyrihaximus/react-mutex": "^1.0"
