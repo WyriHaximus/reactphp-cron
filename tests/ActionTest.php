@@ -1,18 +1,17 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace WyriHaximus\Tests\React;
 
-use ApiClients\Tools\TestUtilities\TestCase;
+use WyriHaximus\AsyncTestUtilities\AsyncTestCase;
 use WyriHaximus\React\Action;
 
-/**
- * @internal
- */
-final class ActionTest extends TestCase
+final class ActionTest extends AsyncTestCase
 {
     public function testIsDue(): void
     {
-        $action = new Action('name', '* * * * *', function (): void {
+        $action = new Action('name', '* * * * *', static function (): void {
         });
 
         self::assertTrue($action->isDue());
@@ -20,8 +19,8 @@ final class ActionTest extends TestCase
 
     public function testPerform(): void
     {
-        $ran = false;
-        $action = new Action('name', '* * * * *', function () use (&$ran): void {
+        $ran    = false;
+        $action = new Action('name', '* * * * *', static function () use (&$ran): void {
             $ran = true;
         });
 

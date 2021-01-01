@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace WyriHaximus\React;
 
@@ -6,13 +8,9 @@ use React\EventLoop\LoopInterface;
 
 final class Scheduler implements SchedulerInterface
 {
-    /** @var LoopInterface */
-    private $loop;
+    private const MINUTE_SECONDS = 60;
+    private LoopInterface $loop;
 
-    /**
-     * Scheduler constructor.
-     * @param LoopInterface $loop
-     */
     public function __construct(LoopInterface $loop)
     {
         $this->loop = $loop;
@@ -21,7 +19,7 @@ final class Scheduler implements SchedulerInterface
     public function schedule(callable $tick): void
     {
         // Tick every 60 seconds
-        $this->loop->addPeriodicTimer(60, function () use ($tick): void {
+        $this->loop->addPeriodicTimer(self::MINUTE_SECONDS, static function () use ($tick): void {
             $tick();
         });
 

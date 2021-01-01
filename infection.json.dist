@@ -1,0 +1,30 @@
+{
+    "timeout": 300,
+    "source": {
+        "directories": [
+            "src"
+        ]
+    },
+    "logs": {
+        "text": "./var/infection.log",
+        "summary": "./var/infection-summary.log",
+        "json": "./var/infection.json",
+        "perMutator": "./var/infection-per-mutator.md"
+    },
+    "mutators": {
+        "@default": true,
+        "CastInt": false,
+        "Continue_": false,
+        "MethodCallRemoval": false,
+        "LessThanOrEqualTo": false,
+        "LessThanOrEqualToNegotiation": false,
+        "GreaterThanOrEqualTo": false,
+        "Multiplication": false,
+        "GreaterThan": false,
+        "InstanceOf_": false,
+        "Minus": false
+    },
+    "phpUnit": {
+        "configDir": "./etc/qa/"
+    }
+}
