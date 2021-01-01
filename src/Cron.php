@@ -18,14 +18,17 @@ final class Cron
     /** @var array<ActionInterface> */
     private array $actions;
 
+    private Scheduler $scheduler;
+
     private MutexInterface $mutex;
 
     private function __construct(LoopInterface $loop, MutexInterface $mutex, ActionInterface ...$actions)
     {
-        $this->actions = $actions;
-        $this->mutex   = $mutex;
+        $this->scheduler = new Scheduler($loop);
+        $this->actions   = $actions;
+        $this->mutex     = $mutex;
 
-        (new Scheduler($loop))->schedule(function (): void {
+        $this->scheduler->schedule(function (): void {
             $this->tick();
         });
     }
@@ -38,6 +41,11 @@ final class Cron
     public static function createWithMutex(LoopInterface $loop, MutexInterface $mutex, ActionInterface ...$actions): self
     {
         return new self($loop, $mutex, ...$actions);
+    }
+
+    public function stop(): void
+    {
+        $this->scheduler->stop();
     }
 
     private function tick(): void

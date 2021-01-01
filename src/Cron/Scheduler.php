@@ -20,6 +20,8 @@ final class Scheduler
     private const TIER_MEDIUM    = 58;
     private const TIER_FAST      = 59;
     private const MINUTE_SECONDS = 60;
+    private const ACTIVE         = true;
+    private const INACTIVE       = false;
 
     private LoopInterface $loop;
 
@@ -27,6 +29,7 @@ final class Scheduler
     private array $ticks = [];
 
     private ?TimerInterface $timer = null;
+    private bool $active           = self::ACTIVE;
 
     public function __construct(LoopInterface $loop)
     {
@@ -56,6 +59,10 @@ final class Scheduler
 
     private function tick(): void
     {
+        if ($this->active === self::INACTIVE) {
+            return;
+        }
+
         $startOfTick = $this->time();
 
         foreach ($this->ticks as $tick) {
@@ -73,12 +80,14 @@ final class Scheduler
     {
         if ($this->timer instanceof TimerInterface) {
             $this->loop->cancelTimer($this->timer);
+            $this->timer = null;
         }
 
         $currentSecond = (int) date('s', (int) $this->time());
 
         if ($currentSecond >= ONE && $currentSecond <= self::TIER_SLOW) {
-            $this->loop->addTimer(self::TIER_SLOW - $currentSecond, function (): void {
+            $this->timer = $this->loop->addTimer(self::TIER_SLOW - $currentSecond, function (): void {
+                $this->timer = null;
                 $this->align();
             });
 
@@ -86,7 +95,8 @@ final class Scheduler
         }
 
         if ($currentSecond > self::TIER_SLOW && $currentSecond <= self::TIER_MEDIUM) {
-            $this->loop->addTimer(ONE, function (): void {
+            $this->timer = $this->loop->addTimer(ONE, function (): void {
+                $this->timer = null;
                 $this->align();
             });
 
@@ -94,7 +104,8 @@ final class Scheduler
         }
 
         if ($currentSecond === self::TIER_FAST) {
-            $this->loop->addTimer(0.001, function (): void {
+            $this->timer = $this->loop->addTimer(0.001, function (): void {
+                $this->timer = null;
                 $this->align();
             });
 
@@ -106,5 +117,16 @@ final class Scheduler
         $this->timer = $this->loop->addPeriodicTimer(self::MINUTE_SECONDS, function (): void {
             $this->tick();
         });
+    }
+
+    public function stop(): void
+    {
+        $this->active = self::INACTIVE;
+
+        if (! ($this->timer instanceof TimerInterface)) {
+            return;
+        }
+
+        $this->loop->cancelTimer($this->timer);
     }
 }
