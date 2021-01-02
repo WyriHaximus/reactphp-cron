@@ -1,1 +1,3 @@
+var/
 vendor/
+etc/qa/.phpunit.result.cache

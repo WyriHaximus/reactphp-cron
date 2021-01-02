@@ -1,0 +1,180 @@
+name: Continuous Integration
+on:
+  push:
+  pull_request:
+jobs:
+  package-name:
+    name: Package Name
+    runs-on: ubuntu-latest
+    needs:
+      - lint-json
+    outputs:
+      package-name: ${{ steps.package-name.outputs.package-name }}
+    steps:
+      - uses: actions/checkout@v1
+      - id: package-name
+        run: |
+          printf "::set-output name=package-name::[\"%s\"]" $(docker run --rm -v "`pwd`:`pwd`" jess/jq jq -r -c '.name' "${GITHUB_WORKSPACE}/composer.json")
+  supported-versions-matrix:
+    name: Supported Versions Matrix
+    runs-on: ubuntu-latest
+    needs:
+      - lint-yaml
+      - lint-json
+    outputs:
+      version: ${{ steps.supported-versions-matrix.outputs.version }}
+    steps:
+      - uses: actions/checkout@v1
+      - id: supported-versions-matrix
+        uses: WyriHaximus/github-action-composer-php-versions-in-range@main
+  supported-checks-matrix:
+    name: Supported Checks Matrix
+    runs-on: ubuntu-latest
+    needs:
+      - lint-yaml
+      - composer-install
+    outputs:
+      check: ${{ steps.supported-checks-matrix.outputs.check }}
+    steps:
+      - uses: actions/checkout@v1
+      - id: supported-checks-matrix
+        name: Generate check
+        run: |
+          printf "Checks found: %s\r\n" $(make task-list-ci)
+          printf "::set-output name=check::%s" $(make task-list-ci)
+  composer-install:
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJson(needs.supported-versions-matrix.outputs.version) }}
+        composer: [lowest, current, highest]
+    needs:
+      - lint-yaml
+      - lint-json
+      - supported-versions-matrix
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/wyrihaximusnet/php:${{ matrix.php }}-nts-buster-dev-root
+    steps:
+      - uses: actions/checkout@v1
+      - name: Cache composer packages
+        uses: actions/cache@v1
+        with:
+          path: ./vendor/
+          key: ${{ matrix.composer }}-${{ matrix.php }}-${{ hashFiles('**/composer.lock') }}
+      - name: Install Dependencies
+        run: composer update --prefer-lowest --no-progress --ansi --no-interaction --prefer-dist -o
+        if: matrix.composer == 'lowest'
+      - name: Install Dependencies
+        run: composer install --ansi --no-progress --no-interaction --prefer-dist -o
+        if: matrix.composer == 'current'
+      - name: Install Dependencies
+        run: composer update --ansi --no-progress --no-interaction --prefer-dist -o
+        if: matrix.composer == 'highest'
+  qa:
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJson(needs.supported-versions-matrix.outputs.version) }}
+        composer: [lowest, current, highest]
+        check: ${{ fromJson(needs.supported-checks-matrix.outputs.check) }}
+    needs:
+      - lint-yaml
+      - lint-json
+      - composer-install
+      - supported-checks-matrix
+      - supported-versions-matrix
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/wyrihaximusnet/php:${{ matrix.php }}-nts-buster-dev-root
+    steps:
+      - uses: actions/checkout@v1
+      - name: Cache composer packages
+        uses: actions/cache@v1
+        with:
+          path: ./vendor/
+          key: ${{ matrix.composer }}-${{ matrix.php }}-${{ hashFiles('**/composer.lock') }}
+      - name: Install Dependencies
+        run: (test -f vendor && true ) || composer update --prefer-lowest --no-progress --ansi --no-interaction --prefer-dist -o
+        if: matrix.composer == 'lowest'
+      - name: Install Dependencies
+        run: (test -f vendor && true ) || composer install --ansi --no-progress --no-interaction --prefer-dist -o
+        if: matrix.composer == 'current'
+      - name: Install Dependencies
+        run: (test -f vendor && true ) || composer update --ansi --no-progress --no-interaction --prefer-dist -o
+        if: matrix.composer == 'highest'
+      - name: Fetch Tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* || true
+        if: matrix.check == 'backward-compatibility-check'
+      - run: make ${{ matrix.check }}
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+          COVERALLS_RUN_LOCALLY: ${{ secrets.COVERALLS_RUN_LOCALLY }}
+  qodana:
+    name: Qodana
+    runs-on: ubuntu-latest
+    needs:
+      - lint-yaml
+      - lint-json
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Qodana - Code Inspection
+        timeout-minutes: 600
+        run: docker run -v ${GITHUB_WORKSPACE}:/data/project -v ${GITHUB_WORKSPACE}/qodana:/data/results jetbrains/qodana:2020.3-eap --save-report
+      - name: Archive results
+        uses: actions/upload-artifact@v2
+        with:
+          name: qodana-results
+          if-no-files-found: error
+          path: qodana/report/results
+      - name: Print results
+        run: |
+          echo "🎉 Qodana has finished successfully!"
+          echo "Download an artifact qodana-results.zip. Code Inspection results are part of file result-allProblems.json."
+          echo "________________________________________________________________"
+          cat ${GITHUB_WORKSPACE}/qodana/report/results/result-allProblems.json
+      - name: Archive error logs
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: qodana-error-logs
+          path: qodana
+      - name: Print error message
+        if: failure()
+        run: |
+          echo "❌ Qodana has failed"
+          echo "Please contact our support team by email at qodana-support@jetbrains.com. Attach qodana-error-logs.zip to your message."
+  lint-yaml:
+    name: Lint YAML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: yaml-lint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          config_data: |
+            extends: default
+            rules:
+              line-length: disable
+              document-start: disable
+              truthy: disable
+  lint-json:
+    name: Lint JSON
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: json-syntax-check
+        uses: limitusus/json-syntax-check@v1
+        with:
+          pattern: "\\.json$"
+  check-mark:
+    name: ✔️
+    needs:
+      - lint-yaml
+      - lint-json
+      - qa
+      - qodana
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "✔️"

@@ -1,31 +1,36 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace WyriHaximus\React;
 
 use React\EventLoop\LoopInterface;
 use React\EventLoop\TimerInterface;
 
+use function hrtime;
+use function Safe\date;
+
+use const WyriHaximus\Constants\Boolean\TRUE_;
+use const WyriHaximus\Constants\Numeric\ONE;
+use const WyriHaximus\Constants\Numeric\ZERO;
+
 final class HighPrecisionScheduler implements SchedulerInterface
 {
-    /** @var LoopInterface */
-    private $loop;
+    private const TIER_SLOW      = 55;
+    private const TIER_MEDIUM    = 58;
+    private const TIER_FAST      = 59;
+    private const MINUTE_SECONDS = 60;
 
-    /** @var bool */
-    private $useHighResolution = false;
+    private LoopInterface $loop;
 
     /** @var callable[] */
-    private $ticks = [];
+    private array $ticks = [];
 
-    /** @var TimerInterface */
-    private $timer;
+    private ?TimerInterface $timer = null;
 
-    /**
-     * @param LoopInterface $loop
-     */
     public function __construct(LoopInterface $loop)
     {
         $this->loop = $loop;
-        $this->useHighResolution = \function_exists('hrtime');
 
         $this->align();
     }
@@ -41,12 +46,12 @@ final class HighPrecisionScheduler implements SchedulerInterface
 
     private function time(): float
     {
-        return $this->useHighResolution ? \hrtime(true) * 1e-9 : \microtime(true);
+        return hrtime(TRUE_) * 1.0E-9;
     }
 
     private function hasDrifted(float $time): bool
     {
-        return (int)\date('s', (int)$time) > 0;
+        return date('s', (int) $time) > ZERO;
     }
 
     private function tick(): void
@@ -57,9 +62,11 @@ final class HighPrecisionScheduler implements SchedulerInterface
             $tick();
         }
 
-        if ($this->hasDrifted($startOfTick)) {
-            $this->align();
+        if (! $this->hasDrifted($startOfTick)) {
+            return;
         }
+
+        $this->align();
     }
 
     private function align(): void
@@ -68,25 +75,25 @@ final class HighPrecisionScheduler implements SchedulerInterface
             $this->loop->cancelTimer($this->timer);
         }
 
-        $currentSecond = (int)\date('s', (int)$this->time());
+        $currentSecond = (int) date('s', (int) $this->time());
 
-        if ($currentSecond >= 1 && $currentSecond <= 55) {
-            $this->loop->addTimer(55 - $currentSecond, function (): void {
+        if ($currentSecond >= ONE && $currentSecond <= self::TIER_SLOW) {
+            $this->loop->addTimer(self::TIER_SLOW - $currentSecond, function (): void {
                 $this->align();
             });
 
             return;
         }
 
-        if ($currentSecond > 55 && $currentSecond <= 58) {
-            $this->loop->addTimer(1, function (): void {
+        if ($currentSecond > self::TIER_SLOW && $currentSecond <= self::TIER_MEDIUM) {
+            $this->loop->addTimer(ONE, function (): void {
                 $this->align();
             });
 
             return;
         }
 
-        if ($currentSecond === 59) {
+        if ($currentSecond === self::TIER_FAST) {
             $this->loop->addTimer(0.001, function (): void {
                 $this->align();
             });
@@ -96,7 +103,7 @@ final class HighPrecisionScheduler implements SchedulerInterface
 
         $this->tick();
 
-        $this->timer = $this->loop->addPeriodicTimer(60, function (): void {
+        $this->timer = $this->loop->addPeriodicTimer(self::MINUTE_SECONDS, function (): void {
             $this->tick();
         });
     }

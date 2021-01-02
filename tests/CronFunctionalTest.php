@@ -1,19 +1,23 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace WyriHaximus\Tests\React;
 
-use ApiClients\Tools\TestUtilities\TestCase;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\StreamSelectLoop;
+use WyriHaximus\AsyncTestUtilities\AsyncTestCase;
 use WyriHaximus\React\Action;
 use WyriHaximus\React\Cron;
 use WyriHaximus\React\Mutex\Memory;
 
-/**
- * @internal
- */
-final class CronFunctionalTest extends TestCase
+use function array_unshift;
+
+final class CronFunctionalTest extends AsyncTestCase
 {
+    /**
+     * @return iterable<string, array<mixed>>
+     */
     public function provideFactoryMethods(): iterable
     {
         yield 'default' => [
@@ -46,27 +50,29 @@ final class CronFunctionalTest extends TestCase
     }
 
     /**
-     * @param string        $factoryMethod
-     * @param LoopInterface $loop
-     * @param array         $args
+     * @param array<mixed> $args
      *
+     * @test
      * @dataProvider provideFactoryMethods
      */
-    public function testScheduling(string $factoryMethod, LoopInterface $loop, array $args): void
+    public function scheduling(string $factoryMethod, LoopInterface $loop, array $args): void
     {
-        $ran = false;
+        $ran      = false;
         $ranTimes = 0;
-        $action = new Action('name', '* * * * *', function () use (&$ran, &$ranTimes, $loop): void {
+        $action   = new Action('name', '* * * * *', static function () use (&$ran, &$ranTimes, $loop): void {
             $ran = true;
             $ranTimes++;
 
-            if ($ranTimes >= 2) {
-                $loop->stop();
+            if ($ranTimes < 2) {
+                return;
             }
+
+            $loop->stop();
         });
 
-        \array_unshift($args, $loop);
+        array_unshift($args, $loop);
         $args[] = $action;
+        /** @phpstan-ignore-next-line */
         Cron::$factoryMethod(...$args);
         $loop->run();
 
@@ -75,30 +81,32 @@ final class CronFunctionalTest extends TestCase
     }
 
     /**
-     * @param string        $factoryMethod
-     * @param LoopInterface $loop
-     * @param array         $args
+     * @param array<mixed> $args
      *
+     * @test
      * @dataProvider provideFactoryMethods
      */
-    public function testMutexLockOnlyAllowsTheSameActionOnce(string $factoryMethod, LoopInterface $loop, array $args): void
+    public function mutexLockOnlyAllowsTheSameActionOnce(string $factoryMethod, LoopInterface $loop, array $args): void
     {
-        $ran = false;
+        $ran      = false;
         $ranTimes = 0;
-        $action = new Action('name', '* * * * *', function () use (&$ran, &$ranTimes, $loop): void {
-            $loop->futureTick(function () use (&$ran, &$ranTimes, $loop): void {
+        $action   = new Action('name', '* * * * *', static function () use (&$ran, &$ranTimes, $loop): void {
+            $loop->futureTick(static function () use (&$ran, &$ranTimes, $loop): void {
                 $ran = true;
                 $ranTimes++;
 
-                if ($ranTimes >= 2) {
-                    $loop->stop();
+                if ($ranTimes < 2) {
+                    return;
                 }
+
+                $loop->stop();
             });
         });
 
-        \array_unshift($args, $loop);
+        array_unshift($args, $loop);
         $args[] = $action;
         $args[] = $action;
+        /** @phpstan-ignore-next-line */
         Cron::$factoryMethod(...$args);
         $loop->run();
 
