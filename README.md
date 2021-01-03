@@ -26,7 +26,7 @@ Cron::create(
         '@hourly', // The cron expression used to schedule this action
         function (): PromiseInterface { // The callable ran when this action is due according to it's schedule
             echo 'Another hour has passed!', PHP_EOL;
-            
+
             return resolve(true); // This callable MUST return a promise, which is used for releasing the mutex lock
         }
     ),
@@ -35,7 +35,7 @@ Cron::create(
         '* * * * *',
         function (): PromiseInterface {
             echo 'Another minute has passed!', PHP_EOL;
-            
+
             return resolve(true);
         }
     )
@@ -44,29 +44,19 @@ Cron::create(
 
 # Factory methods
 
-* `Cron::create($loop, ...$actions)`: Cron using basic scheduler ticking every 60 seconds and with in-memory mutex.
-* `Cron::createHighPrecision($loop, ...$actions)`: Cron using a high precision scheduler and with in-memory mutex.
-* `Cron::createWithMutex($loop, $mutex, ...$actions)`: Cron using basic scheduler ticking every 60 seconds and with supplied mutex.
-* `Cron::createHighPrecisionWithMutex($loop, $mutex, ...$actions)`: Cron using a high precision scheduler ticking every 60 seconds and with supplied mutex.
-
-# Schedulers 
-
-This package comes with two schedulers, both of which will tick every minute and the moment a new callable is registered to it:
-
-* Basic scheduler: Will tick every 60 seconds regardless of what second of the minute it is.
-* High precision scheduler: Will ALWAYS tick in the first second of the minute, it will readjust when it deviates out of 
-that first second to in the first second next minute.
+* `Cron::create($loop, ...$actions)`: Cron with in-memory mutex.
+* `Cron::createWithMutex($loop, $mutex, ...$actions)`: Cron with supplied mutex.
 
 # Mutex
 
-All mutexes must implement [`wyrihaximus/react-mutex`](https://packagist.org/packages/wyrihaximus/react-mutex) to provide 
+All mutexes must implement [`wyrihaximus/react-mutex`](https://packagist.org/packages/wyrihaximus/react-mutex) to provide
 additional implementations beyond the default in memory one. This is meant to do distributed locking of cron jobs.
 
 # License
 
 The MIT License (MIT)
 
-Copyright (c) 2019 Cees-Jan Kiewiet
+Copyright (c) 2021 Cees-Jan Kiewiet
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

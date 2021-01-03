@@ -18,34 +18,24 @@ final class Cron
 
     private MutexInterface $mutex;
 
-    private function __construct(SchedulerInterface $scheduler, MutexInterface $mutex, ActionInterface ...$actions)
+    private function __construct(LoopInterface $loop, MutexInterface $mutex, ActionInterface ...$actions)
     {
         $this->actions = $actions;
         $this->mutex   = $mutex;
 
-        $scheduler->schedule(function (): void {
+        (new Scheduler($loop))->schedule(function (): void {
             $this->tick();
         });
     }
 
     public static function create(LoopInterface $loop, ActionInterface ...$actions): self
     {
-        return new self(new Scheduler($loop), new Memory(), ...$actions);
-    }
-
-    public static function createHighPrecision(LoopInterface $loop, ActionInterface ...$actions): self
-    {
-        return new self(new HighPrecisionScheduler($loop), new Memory(), ...$actions);
+        return new self($loop, new Memory(), ...$actions);
     }
 
     public static function createWithMutex(LoopInterface $loop, MutexInterface $mutex, ActionInterface ...$actions): self
     {
-        return new self(new Scheduler($loop), $mutex, ...$actions);
-    }
-
-    public static function createHighPrecisionWithMutex(LoopInterface $loop, MutexInterface $mutex, ActionInterface ...$actions): self
-    {
-        return new self(new HighPrecisionScheduler($loop), $mutex, ...$actions);
+        return new self($loop, $mutex, ...$actions);
     }
 
     private function tick(): void

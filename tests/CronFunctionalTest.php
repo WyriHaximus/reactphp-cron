@@ -26,22 +26,8 @@ final class CronFunctionalTest extends AsyncTestCase
             [],
         ];
 
-        yield 'high_precision' => [
-            'createHighPrecision',
-            new StreamSelectLoop(),
-            [],
-        ];
-
         yield 'default_mutex' => [
             'createWithMutex',
-            new StreamSelectLoop(),
-            [
-                new Memory(),
-            ],
-        ];
-
-        yield 'high_precision_mutex' => [
-            'createHighPrecisionWithMutex',
             new StreamSelectLoop(),
             [
                 new Memory(),
