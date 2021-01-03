@@ -14,7 +14,7 @@ use const WyriHaximus\Constants\Boolean\TRUE_;
 use const WyriHaximus\Constants\Numeric\ONE;
 use const WyriHaximus\Constants\Numeric\ZERO;
 
-final class Scheduler implements SchedulerInterface
+final class Scheduler
 {
     private const TIER_SLOW      = 55;
     private const TIER_MEDIUM    = 58;
