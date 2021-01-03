@@ -6,6 +6,8 @@ namespace WyriHaximus\React;
 
 use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
+use WyriHaximus\React\Cron\ActionInterface;
+use WyriHaximus\React\Cron\Scheduler;
 use WyriHaximus\React\Mutex\Memory;
 use WyriHaximus\React\Mutex\MutexInterface;
 

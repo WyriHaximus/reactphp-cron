@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace WyriHaximus\React;
+namespace WyriHaximus\React\Cron;
 
 interface SchedulerInterface
 {

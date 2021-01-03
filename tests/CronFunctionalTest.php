@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace WyriHaximus\Tests\React;
+namespace WyriHaximus\Tests\React\Cron;
 
 use React\EventLoop\LoopInterface;
 use React\EventLoop\StreamSelectLoop;
 use WyriHaximus\AsyncTestUtilities\AsyncTestCase;
-use WyriHaximus\React\Action;
 use WyriHaximus\React\Cron;
+use WyriHaximus\React\Cron\Action;
 use WyriHaximus\React\Mutex\Memory;
 
 use function array_unshift;
