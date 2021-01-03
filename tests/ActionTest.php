@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace WyriHaximus\Tests\React;
+namespace WyriHaximus\Tests\React\Cron;
 
 use WyriHaximus\AsyncTestUtilities\AsyncTestCase;
-use WyriHaximus\React\Action;
+use WyriHaximus\React\Cron\Action;
 
 final class ActionTest extends AsyncTestCase
 {
