@@ -16,6 +16,7 @@
         "CastInt": false,
         "Continue_": false,
         "MethodCallRemoval": false,
+        "LogicalNot": false,
         "LessThanOrEqualTo": false,
         "LessThanOrEqualToNegotiation": false,
         "GreaterThanOrEqualTo": false,
