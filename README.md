@@ -1,6 +1,6 @@
 # Cronlike scheduler running inside a ReactPHP Event Loop
 
-[![Build Status](https://travis-ci.com/WyriHaximus/reactphp-cron.svg?branch=master)](https://travis-ci.com/WyriHaximus/reactphp-cron)
+![Continuous Integration](https://github.com/WyriHaximus/reactphp-cron/workflows/Continuous%20Integration/badge.svg)
 [![Latest Stable Version](https://poser.pugx.org/WyriHaximus/react-cron/v/stable.png)](https://packagist.org/packages/WyriHaximus/react-cron)
 [![Total Downloads](https://poser.pugx.org/WyriHaximus/react-cron/downloads.png)](https://packagist.org/packages/WyriHaximus/react-cron)
 [![Code Coverage](https://scrutinizer-ci.com/g/WyriHaximus/reactphp-cron/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/WyriHaximus/reactphp-cron/?branch=master)
