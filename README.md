@@ -19,7 +19,7 @@ composer require wyrihaximus/react-cron
 Schedule actions within the ReactPHP Event Loop
 
 ```php
-Cron::create(
+$cron = Cron::create(
     $loop,
     new Action(
         'Hour', // Identifier used for mutex locking locking
@@ -40,6 +40,9 @@ Cron::create(
         }
     )
 );
+
+// Stops scheduling new action runs
+$cron->stop();
 ```
 
 # Factory methods
