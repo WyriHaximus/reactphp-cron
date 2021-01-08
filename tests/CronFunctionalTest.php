@@ -48,7 +48,7 @@ final class CronFunctionalTest extends AsyncTestCase
         $ranTimes = 0;
         $cron     = null;
         $deferred = new Deferred();
-        $action   = new Action('name', '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
+        $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
             $ran = true;
             $ranTimes++;
 
@@ -85,7 +85,7 @@ final class CronFunctionalTest extends AsyncTestCase
         $ranTimes = 0;
         $cron     = null;
         $deferred = new Deferred();
-        $action   = new Action('name', '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $loop, $deferred): void {
+        $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $loop, $deferred): void {
             $loop->futureTick(static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
                 $ran = true;
                 $ranTimes++;

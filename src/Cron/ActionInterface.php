@@ -14,6 +14,12 @@ interface ActionInterface
     public function key(): string;
 
     /**
+     * Ttl for the mutex used to ensure we only have one of each action running at the same time.
+     * The action must have been finished within this time frame.
+     */
+    public function mutexTtl(): float;
+
+    /**
      * Returns true when it is time for this action to run, false when it isn't.
      */
     public function isDue(): bool;

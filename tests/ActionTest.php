@@ -11,7 +11,7 @@ final class ActionTest extends AsyncTestCase
 {
     public function testIsDue(): void
     {
-        $action = new Action('name', '* * * * *', static function (): void {
+        $action = new Action('name', 0.1, '* * * * *', static function (): void {
         });
 
         self::assertTrue($action->isDue());
@@ -20,7 +20,7 @@ final class ActionTest extends AsyncTestCase
     public function testPerform(): void
     {
         $ran    = false;
-        $action = new Action('name', '* * * * *', static function () use (&$ran): void {
+        $action = new Action('name', 0.1, '* * * * *', static function () use (&$ran): void {
             $ran = true;
         });
 
