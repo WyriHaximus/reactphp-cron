@@ -12,15 +12,17 @@ use function React\Promise\resolve;
 final class Action implements ActionInterface
 {
     private string $key;
+    private float $mutexTtl;
 
     private CronExpression $expression;
 
     /** @var callable */
     private $performer;
 
-    public function __construct(string $key, string $expression, callable $performer)
+    public function __construct(string $key, float $mutexTtl, string $expression, callable $performer)
     {
         $this->key        = $key;
+        $this->mutexTtl   = $mutexTtl;
         $this->expression = new CronExpression($expression);
         $this->performer  = $performer;
     }
@@ -28,6 +30,11 @@ final class Action implements ActionInterface
     public function key(): string
     {
         return $this->key;
+    }
+
+    public function mutexTtl(): float
+    {
+        return $this->mutexTtl;
     }
 
     public function isDue(): bool
