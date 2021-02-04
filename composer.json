@@ -12,7 +12,7 @@
         "wyrihaximus/react-mutex-contracts": "^1.0"
     },
     "require-dev": {
-        "wyrihaximus/async-test-utilities": "^3.4.5"
+        "wyrihaximus/async-test-utilities": "^3.4.6"
     },
     "config": {
         "platform": {
