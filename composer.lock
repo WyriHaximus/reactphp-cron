@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "16bb940f5a2e1e3d301005f894987a6b",
+    "content-hash": "a668e6fc09dac49f609ce2984305c2c4",
     "packages": [
         {
             "name": "dragonmantank/cron-expression",
@@ -8188,16 +8188,16 @@
         },
         {
             "name": "vimeo/psalm",
-            "version": "4.4.1",
+            "version": "4.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/vimeo/psalm.git",
-                "reference": "9fd7a7d885b3a216cff8dec9d8c21a132f275224"
+                "reference": "a45b5e2ae01d43175ff02684f592c83cfbd48533"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/vimeo/psalm/zipball/9fd7a7d885b3a216cff8dec9d8c21a132f275224",
-                "reference": "9fd7a7d885b3a216cff8dec9d8c21a132f275224",
+                "url": "https://api.github.com/repos/vimeo/psalm/zipball/a45b5e2ae01d43175ff02684f592c83cfbd48533",
+                "reference": "a45b5e2ae01d43175ff02684f592c83cfbd48533",
                 "shasum": ""
             },
             "require": {
@@ -8286,9 +8286,9 @@
             ],
             "support": {
                 "issues": "https://github.com/vimeo/psalm/issues",
-                "source": "https://github.com/vimeo/psalm/tree/4.4.1"
+                "source": "https://github.com/vimeo/psalm/tree/4.5.0"
             },
-            "time": "2021-01-14T21:44:29+00:00"
+            "time": "2021-02-10T17:20:36+00:00"
         },
         {
             "name": "webmozart/glob",
@@ -8392,16 +8392,16 @@
         },
         {
             "name": "wyrihaximus/async-test-utilities",
-            "version": "3.4.7",
+            "version": "3.4.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/WyriHaximus/php-async-test-utilities.git",
-                "reference": "7af1f4dc6a338502461bc52b57630e37198a0a75"
+                "reference": "d34f8b473bbe07cf376ee71a0d89c89744e5f1fb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/php-async-test-utilities/zipball/7af1f4dc6a338502461bc52b57630e37198a0a75",
-                "reference": "7af1f4dc6a338502461bc52b57630e37198a0a75",
+                "url": "https://api.github.com/repos/WyriHaximus/php-async-test-utilities/zipball/d34f8b473bbe07cf376ee71a0d89c89744e5f1fb",
+                "reference": "d34f8b473bbe07cf376ee71a0d89c89744e5f1fb",
                 "shasum": ""
             },
             "require": {
@@ -8410,7 +8410,7 @@
                 "phpunit/phpunit": "^9.5",
                 "react/event-loop": "^1.1",
                 "react/promise": "^2.8",
-                "wyrihaximus/test-utilities": "^3.5.6"
+                "wyrihaximus/test-utilities": "^3.5.7"
             },
             "require-dev": {
                 "wyrihaximus/iterator-or-array-to-array": "^1.1"
@@ -8434,7 +8434,7 @@
             "description": "Test utilities for api-clients packages",
             "support": {
                 "issues": "https://github.com/WyriHaximus/php-async-test-utilities/issues",
-                "source": "https://github.com/WyriHaximus/php-async-test-utilities/tree/3.4.7"
+                "source": "https://github.com/WyriHaximus/php-async-test-utilities/tree/3.4.8"
             },
             "funding": [
                 {
@@ -8442,7 +8442,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-02-10T08:20:47+00:00"
+            "time": "2021-02-11T05:22:25+00:00"
         },
         {
             "name": "wyrihaximus/coding-standard",
@@ -8528,16 +8528,16 @@
         },
         {
             "name": "wyrihaximus/test-utilities",
-            "version": "3.5.6",
+            "version": "3.5.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/WyriHaximus/php-test-utilities.git",
-                "reference": "e5830852a2f5f7b16e2e5eea5b593154870d4a5c"
+                "reference": "1522d65d0d2d508b0204d80720e9837ac303a378"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/php-test-utilities/zipball/e5830852a2f5f7b16e2e5eea5b593154870d4a5c",
-                "reference": "e5830852a2f5f7b16e2e5eea5b593154870d4a5c",
+                "url": "https://api.github.com/repos/WyriHaximus/php-test-utilities/zipball/1522d65d0d2d508b0204d80720e9837ac303a378",
+                "reference": "1522d65d0d2d508b0204d80720e9837ac303a378",
                 "shasum": ""
             },
             "require": {
@@ -8561,7 +8561,7 @@
                 "roave/infection-static-analysis-plugin": "^1.7.0",
                 "squizlabs/php_codesniffer": "^3.5.8",
                 "thecodingmachine/safe": "^1.3.3",
-                "vimeo/psalm": "^4.4.1",
+                "vimeo/psalm": "^4.5.0",
                 "wyrihaximus/coding-standard": "^2.3.0",
                 "wyrihaximus/phpstan-rules-wrapper": "^1.2.2"
             },
@@ -8610,7 +8610,7 @@
             "description": "🛠️ Test utilities for api-clients packages",
             "support": {
                 "issues": "https://github.com/WyriHaximus/php-test-utilities/issues",
-                "source": "https://github.com/WyriHaximus/php-test-utilities/tree/3.5.6"
+                "source": "https://github.com/WyriHaximus/php-test-utilities/tree/3.5.7"
             },
             "funding": [
                 {
@@ -8618,7 +8618,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-02-09T08:14:16+00:00"
+            "time": "2021-02-11T03:02:18+00:00"
         }
     ],
     "aliases": [],
