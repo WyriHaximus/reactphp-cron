@@ -10,7 +10,7 @@
         "thecodingmachine/safe": "^1.3",
         "wyrihaximus/constants": "^1.6",
         "wyrihaximus/react-mutex": "^2.0",
-        "wyrihaximus/react-mutex-contracts": "^1.0"
+        "wyrihaximus/react-mutex-contracts": "^1.1"
     },
     "require-dev": {
         "wyrihaximus/async-test-utilities": "^3.4.23"

@@ -11,8 +11,6 @@ use WyriHaximus\React\Cron\Scheduler;
 use WyriHaximus\React\Mutex\Contracts\MutexInterface;
 use WyriHaximus\React\Mutex\Memory;
 
-use const WyriHaximus\Constants\Boolean\FALSE_;
-
 final class Cron
 {
     /** @var array<ActionInterface> */
@@ -68,7 +66,7 @@ final class Cron
          * @psalm-suppress UndefinedInterfaceMethod
          */
         $this->mutex->acquire($action->key(), $action->mutexTtl())->then(function ($lock) use ($action): void {
-            if ($lock === FALSE_) {
+            if ($lock === null) {
                 return;
             }
 
