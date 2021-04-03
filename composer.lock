@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "476c84ea3277dde789d5b6fbe870fa01",
+    "content-hash": "ba98d7801c208aa70b82b3e67ad1eb0f",
     "packages": [
         {
             "name": "dragonmantank/cron-expression",
@@ -69,16 +69,16 @@
         },
         {
             "name": "react/cache",
-            "version": "v1.1.0",
+            "version": "v1.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/cache.git",
-                "reference": "44a568925556b0bd8cacc7b49fb0f1cf0d706a0c"
+                "reference": "4bf736a2cccec7298bdf745db77585966fc2ca7e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/cache/zipball/44a568925556b0bd8cacc7b49fb0f1cf0d706a0c",
-                "reference": "44a568925556b0bd8cacc7b49fb0f1cf0d706a0c",
+                "url": "https://api.github.com/repos/reactphp/cache/zipball/4bf736a2cccec7298bdf745db77585966fc2ca7e",
+                "reference": "4bf736a2cccec7298bdf745db77585966fc2ca7e",
                 "shasum": ""
             },
             "require": {
@@ -129,7 +129,7 @@
             ],
             "support": {
                 "issues": "https://github.com/reactphp/cache/issues",
-                "source": "https://github.com/reactphp/cache/tree/v1.1.0"
+                "source": "https://github.com/reactphp/cache/tree/v1.1.1"
             },
             "funding": [
                 {
@@ -141,7 +141,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2020-09-18T12:12:35+00:00"
+            "time": "2021-02-02T06:47:52+00:00"
         },
         {
             "name": "react/event-loop",
@@ -616,16 +616,16 @@
         },
         {
             "name": "wyrihaximus/react-mutex-contracts",
-            "version": "1.0.0",
+            "version": "1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/WyriHaximus/reactphp-mutex-contracts.git",
-                "reference": "c2f97f027f2ffa114ca20ecbaa2aaadefdf8b84c"
+                "reference": "b5a5567128035b4c8ce924fcb36e56c72fca7775"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/reactphp-mutex-contracts/zipball/c2f97f027f2ffa114ca20ecbaa2aaadefdf8b84c",
-                "reference": "c2f97f027f2ffa114ca20ecbaa2aaadefdf8b84c",
+                "url": "https://api.github.com/repos/WyriHaximus/reactphp-mutex-contracts/zipball/b5a5567128035b4c8ce924fcb36e56c72fca7775",
+                "reference": "b5a5567128035b4c8ce924fcb36e56c72fca7775",
                 "shasum": ""
             },
             "require": {
@@ -648,7 +648,7 @@
             "description": "Mutex locking contracts for ReactPHP projects",
             "support": {
                 "issues": "https://github.com/WyriHaximus/reactphp-mutex-contracts/issues",
-                "source": "https://github.com/WyriHaximus/reactphp-mutex-contracts/tree/1.0.0"
+                "source": "https://github.com/WyriHaximus/reactphp-mutex-contracts/tree/1.1.0"
             },
             "funding": [
                 {
@@ -656,7 +656,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-01-21T19:16:05+00:00"
+            "time": "2021-04-03T20:22:48+00:00"
         },
         {
             "name": "wyrihaximus/ticking-promise",
@@ -1093,16 +1093,16 @@
         },
         {
             "name": "composer/composer",
-            "version": "1.10.20",
+            "version": "1.10.21",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/composer.git",
-                "reference": "e55d297525f0ecc805c813a0f63a40114fd670f6"
+                "reference": "04021432f4a9cbd9351dd166b8c193f42c36a39c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/composer/zipball/e55d297525f0ecc805c813a0f63a40114fd670f6",
-                "reference": "e55d297525f0ecc805c813a0f63a40114fd670f6",
+                "url": "https://api.github.com/repos/composer/composer/zipball/04021432f4a9cbd9351dd166b8c193f42c36a39c",
+                "reference": "04021432f4a9cbd9351dd166b8c193f42c36a39c",
                 "shasum": ""
             },
             "require": {
@@ -1172,7 +1172,7 @@
             "support": {
                 "irc": "irc://irc.freenode.org/composer",
                 "issues": "https://github.com/composer/composer/issues",
-                "source": "https://github.com/composer/composer/tree/1.10.20"
+                "source": "https://github.com/composer/composer/tree/1.10.21"
             },
             "funding": [
                 {
@@ -1188,7 +1188,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-01-27T14:41:06+00:00"
+            "time": "2021-04-01T07:16:35+00:00"
         },
         {
             "name": "composer/package-versions-deprecated",
@@ -4358,16 +4358,16 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "0.12.82",
+            "version": "0.12.83",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "3920f0fb0aff39263d3a4cb0bca120a67a1a6a11"
+                "reference": "4a967cec6efb46b500dd6d768657336a3ffe699f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/3920f0fb0aff39263d3a4cb0bca120a67a1a6a11",
-                "reference": "3920f0fb0aff39263d3a4cb0bca120a67a1a6a11",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/4a967cec6efb46b500dd6d768657336a3ffe699f",
+                "reference": "4a967cec6efb46b500dd6d768657336a3ffe699f",
                 "shasum": ""
             },
             "require": {
@@ -4398,7 +4398,7 @@
             "description": "PHPStan - PHP Static Analysis Tool",
             "support": {
                 "issues": "https://github.com/phpstan/phpstan/issues",
-                "source": "https://github.com/phpstan/phpstan/tree/0.12.82"
+                "source": "https://github.com/phpstan/phpstan/tree/0.12.83"
             },
             "funding": [
                 {
@@ -4414,7 +4414,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-03-19T06:08:17+00:00"
+            "time": "2021-04-03T15:35:45+00:00"
         },
         {
             "name": "phpstan/phpstan-deprecation-rules",
