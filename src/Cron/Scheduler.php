@@ -7,7 +7,7 @@ namespace WyriHaximus\React\Cron;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\TimerInterface;
 
-use function hrtime;
+use function microtime;
 use function Safe\date;
 
 use const WyriHaximus\Constants\Boolean\TRUE_;
@@ -49,7 +49,7 @@ final class Scheduler
 
     private function time(): float
     {
-        return hrtime(TRUE_) * 1.0E-9;
+        return microtime(TRUE_);
     }
 
     private function hasDrifted(float $time): bool
