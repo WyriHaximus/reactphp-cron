@@ -8,6 +8,7 @@ use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 use WyriHaximus\React\Cron\ActionInterface;
 use WyriHaximus\React\Cron\Scheduler;
+use WyriHaximus\React\Mutex\Contracts\LockInterface;
 use WyriHaximus\React\Mutex\Contracts\MutexInterface;
 use WyriHaximus\React\Mutex\Memory;
 
@@ -65,7 +66,7 @@ final class Cron
          * @psalm-suppress TooManyTemplateParams
          * @psalm-suppress UndefinedInterfaceMethod
          */
-        $this->mutex->acquire($action->key(), $action->mutexTtl())->then(function ($lock) use ($action): void {
+        $this->mutex->acquire($action->key(), $action->mutexTtl())->then(function (?LockInterface $lock) use ($action): void {
             if ($lock === null) {
                 return;
             }
