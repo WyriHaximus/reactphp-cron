@@ -23,7 +23,10 @@
         "Multiplication": false,
         "GreaterThan": false,
         "InstanceOf_": false,
-        "Minus": false
+        "Minus": false,
+        "PublicVisibility": false,
+        "FunctionCallRemoval": false,
+        "Identical": false
     },
     "phpUnit": {
         "configDir": "./etc/qa/"

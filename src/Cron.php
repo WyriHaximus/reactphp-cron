@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace WyriHaximus\React;
 
-use React\EventLoop\LoopInterface;
 use React\Promise\PromiseInterface;
 use WyriHaximus\React\Cron\ActionInterface;
 use WyriHaximus\React\Cron\Scheduler;
@@ -21,9 +20,9 @@ final class Cron
 
     private MutexInterface $mutex;
 
-    private function __construct(LoopInterface $loop, MutexInterface $mutex, ActionInterface ...$actions)
+    private function __construct(MutexInterface $mutex, ActionInterface ...$actions)
     {
-        $this->scheduler = new Scheduler($loop);
+        $this->scheduler = new Scheduler();
         $this->actions   = $actions;
         $this->mutex     = $mutex;
 
@@ -32,14 +31,14 @@ final class Cron
         });
     }
 
-    public static function create(LoopInterface $loop, ActionInterface ...$actions): self
+    public static function create(ActionInterface ...$actions): self
     {
-        return new self($loop, new Memory(), ...$actions);
+        return self::createWithMutex(new Memory(), ...$actions);
     }
 
-    public static function createWithMutex(LoopInterface $loop, MutexInterface $mutex, ActionInterface ...$actions): self
+    public static function createWithMutex(MutexInterface $mutex, ActionInterface ...$actions): self
     {
-        return new self($loop, $mutex, ...$actions);
+        return new self($mutex, ...$actions);
     }
 
     public function stop(): void
