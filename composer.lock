@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ba98d7801c208aa70b82b3e67ad1eb0f",
+    "content-hash": "5534cf1afeb4b46743a27f4260f1f47b",
     "packages": [
         {
             "name": "dragonmantank/cron-expression",
@@ -8401,16 +8401,16 @@
         },
         {
             "name": "wyrihaximus/async-test-utilities",
-            "version": "3.4.23",
+            "version": "3.4.24",
             "source": {
                 "type": "git",
                 "url": "https://github.com/WyriHaximus/php-async-test-utilities.git",
-                "reference": "672572a7ccc8e0d2cd17a3f9c8a97c4614e467db"
+                "reference": "fee2c6404f646d3c4040974040a2001d22a92de7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/php-async-test-utilities/zipball/672572a7ccc8e0d2cd17a3f9c8a97c4614e467db",
-                "reference": "672572a7ccc8e0d2cd17a3f9c8a97c4614e467db",
+                "url": "https://api.github.com/repos/WyriHaximus/php-async-test-utilities/zipball/fee2c6404f646d3c4040974040a2001d22a92de7",
+                "reference": "fee2c6404f646d3c4040974040a2001d22a92de7",
                 "shasum": ""
             },
             "require": {
@@ -8419,7 +8419,7 @@
                 "phpunit/phpunit": "^9.5",
                 "react/event-loop": "^1.1",
                 "react/promise": "^2.8",
-                "wyrihaximus/test-utilities": "^3.6.8"
+                "wyrihaximus/test-utilities": "^3.7.0"
             },
             "require-dev": {
                 "wyrihaximus/iterator-or-array-to-array": "^1.1"
@@ -8443,7 +8443,7 @@
             "description": "Test utilities for api-clients packages",
             "support": {
                 "issues": "https://github.com/WyriHaximus/php-async-test-utilities/issues",
-                "source": "https://github.com/WyriHaximus/php-async-test-utilities/tree/3.4.23"
+                "source": "https://github.com/WyriHaximus/php-async-test-utilities/tree/3.4.24"
             },
             "funding": [
                 {
@@ -8451,7 +8451,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-03-31T23:19:37+00:00"
+            "time": "2021-04-05T21:31:31+00:00"
         },
         {
             "name": "wyrihaximus/coding-standard",
@@ -8537,20 +8537,20 @@
         },
         {
             "name": "wyrihaximus/test-utilities",
-            "version": "3.6.8",
+            "version": "3.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/WyriHaximus/php-test-utilities.git",
-                "reference": "5180fec8f758f7f42ee1797668c2a979e29d1111"
+                "reference": "656bfae3535868ff6511764d9f608e0c15f6244c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/php-test-utilities/zipball/5180fec8f758f7f42ee1797668c2a979e29d1111",
-                "reference": "5180fec8f758f7f42ee1797668c2a979e29d1111",
+                "url": "https://api.github.com/repos/WyriHaximus/php-test-utilities/zipball/656bfae3535868ff6511764d9f608e0c15f6244c",
+                "reference": "656bfae3535868ff6511764d9f608e0c15f6244c",
                 "shasum": ""
             },
             "require": {
-                "composer/composer": "^1.10.20",
+                "composer/composer": "^1.10.21",
                 "ergebnis/composer-normalize": "^2.13.3",
                 "icanhazstring/composer-unused": "^0.7.5",
                 "infection/infection": "^0.20.2",
@@ -8563,7 +8563,7 @@
                 "php-parallel-lint/php-parallel-lint": "^1.2.0",
                 "phpspec/prophecy": "^1.13",
                 "phpspec/prophecy-phpunit": "^2.0.1",
-                "phpstan/phpstan": "^0.12.82",
+                "phpstan/phpstan": "^0.12.83",
                 "phpunit/phpunit": "^9.5.4",
                 "psalm/plugin-phpunit": "^0.15.1",
                 "roave/backward-compatibility-check": "^5.0.0",
@@ -8619,7 +8619,7 @@
             "description": "🛠️ Test utilities for api-clients packages",
             "support": {
                 "issues": "https://github.com/WyriHaximus/php-test-utilities/issues",
-                "source": "https://github.com/WyriHaximus/php-test-utilities/tree/3.6.8"
+                "source": "https://github.com/WyriHaximus/php-test-utilities/tree/3.7.0"
             },
             "funding": [
                 {
@@ -8627,7 +8627,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-03-31T21:35:50+00:00"
+            "time": "2021-04-05T19:59:58+00:00"
         }
     ],
     "aliases": [],
