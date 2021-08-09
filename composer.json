@@ -3,7 +3,7 @@
     "description": "Cronlike scheduler running inside a ReactPHP Event Loop",
     "license": "MIT",
     "require": {
-        "php": "^7.4",
+        "php": "^8 || ^7.4",
         "dragonmantank/cron-expression": "^3.1",
         "react/event-loop": "^1.2",
         "react/promise": "^2.7",
