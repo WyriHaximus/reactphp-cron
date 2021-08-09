@@ -38,9 +38,6 @@ final class Scheduler
     {
         // Push this new tick on the stack with the rest, running it in the next minute
         $this->ticks[] = $tick;
-
-        // Initial tick because some actions might want to run in this minute
-        $tick();
     }
 
     private function time(): float
