@@ -19,17 +19,13 @@ composer require wyrihaximus/react-cron
 Schedule actions within the ReactPHP Event Loop
 
 ```php
-use React\EventLoop\Factory;
 use React\Promise\PromiseInterface;
 use WyriHaximus\React\Cron;
 use WyriHaximus\React\Cron\Action;
 
 use function React\Promise\resolve;
 
-$loop = Factory::create();
-
-$cron = Cron::create(
-    $loop,
+Cron::create(
     new Action(
         'Hour', // Identifier used for mutex locking locking
         60, // TTL for the mutex lock, always set this way higher than the expected execution time, but low enough any failures during the run will cause issues
