@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace WyriHaximus\React\Cron;
 
-use React\EventLoop\LoopInterface;
+use React\EventLoop\Loop;
 use React\EventLoop\TimerInterface;
 
 use function microtime;
@@ -23,18 +23,14 @@ final class Scheduler
     private const ACTIVE         = true;
     private const INACTIVE       = false;
 
-    private LoopInterface $loop;
-
     /** @var callable[] */
     private array $ticks = [];
 
     private ?TimerInterface $timer = null;
     private bool $active           = self::ACTIVE;
 
-    public function __construct(LoopInterface $loop)
+    public function __construct()
     {
-        $this->loop = $loop;
-
         $this->align();
     }
 
@@ -79,14 +75,14 @@ final class Scheduler
     private function align(): void
     {
         if ($this->timer instanceof TimerInterface) {
-            $this->loop->cancelTimer($this->timer);
+            Loop::cancelTimer($this->timer);
             $this->timer = null;
         }
 
         $currentSecond = (int) date('s', (int) $this->time());
 
         if ($currentSecond >= ONE && $currentSecond <= self::TIER_SLOW) {
-            $this->timer = $this->loop->addTimer(self::TIER_SLOW - $currentSecond, function (): void {
+            $this->timer = Loop::addTimer(self::TIER_SLOW - $currentSecond, function (): void {
                 $this->timer = null;
                 $this->align();
             });
@@ -95,7 +91,7 @@ final class Scheduler
         }
 
         if ($currentSecond > self::TIER_SLOW && $currentSecond <= self::TIER_MEDIUM) {
-            $this->timer = $this->loop->addTimer(ONE, function (): void {
+            $this->timer = Loop::addTimer(ONE, function (): void {
                 $this->timer = null;
                 $this->align();
             });
@@ -104,7 +100,7 @@ final class Scheduler
         }
 
         if ($currentSecond === self::TIER_FAST) {
-            $this->timer = $this->loop->addTimer(0.001, function (): void {
+            $this->timer = Loop::addTimer(0.001, function (): void {
                 $this->timer = null;
                 $this->align();
             });
@@ -114,7 +110,7 @@ final class Scheduler
 
         $this->tick();
 
-        $this->timer = $this->loop->addPeriodicTimer(self::MINUTE_SECONDS, function (): void {
+        $this->timer = Loop::addPeriodicTimer(self::MINUTE_SECONDS, function (): void {
             $this->tick();
         });
     }
@@ -127,6 +123,6 @@ final class Scheduler
             return;
         }
 
-        $this->loop->cancelTimer($this->timer);
+        Loop::cancelTimer($this->timer);
     }
 }

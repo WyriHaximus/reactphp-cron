@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace WyriHaximus\Tests\React\Cron;
 
-use React\EventLoop\Factory;
-use React\EventLoop\LoopInterface;
+use React\EventLoop\Loop;
 use React\Promise\Deferred;
 use WyriHaximus\AsyncTestUtilities\AsyncTestCase;
 use WyriHaximus\React\Cron;
 use WyriHaximus\React\Cron\Action;
 use WyriHaximus\React\Mutex\Memory;
-
-use function array_unshift;
 
 final class CronFunctionalTest extends AsyncTestCase
 {
@@ -23,13 +20,11 @@ final class CronFunctionalTest extends AsyncTestCase
     {
         yield 'default' => [
             'create',
-            Factory::create(),
             [],
         ];
 
-        yield 'default_mutex' => [
+        yield 'default_with_memory_mutex' => [
             'createWithMutex',
-            Factory::create(),
             [
                 new Memory(),
             ],
@@ -42,7 +37,7 @@ final class CronFunctionalTest extends AsyncTestCase
      * @test
      * @dataProvider provideFactoryMethods
      */
-    public function scheduling(string $factoryMethod, LoopInterface $loop, array $args): void
+    public function scheduling(string $factoryMethod, array $args): void
     {
         $ran      = false;
         $ranTimes = 0;
@@ -63,11 +58,10 @@ final class CronFunctionalTest extends AsyncTestCase
             $deferred->resolve();
         });
 
-        array_unshift($args, $loop);
         $args[] = $action;
         /** @phpstan-ignore-next-line */
         $cron = Cron::$factoryMethod(...$args);
-        $this->await($deferred->promise(), $loop, 150);
+        $this->await($deferred->promise(), 150);
 
         self::assertTrue($ran);
         self::assertSame(2, $ranTimes);
@@ -79,14 +73,14 @@ final class CronFunctionalTest extends AsyncTestCase
      * @test
      * @dataProvider provideFactoryMethods
      */
-    public function mutexLockOnlyAllowsTheSameActionOnce(string $factoryMethod, LoopInterface $loop, array $args): void
+    public function mutexLockOnlyAllowsTheSameActionOnce(string $factoryMethod, array $args): void
     {
         $ran      = false;
         $ranTimes = 0;
         $cron     = null;
         $deferred = new Deferred();
-        $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $loop, $deferred): void {
-            $loop->futureTick(static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
+        $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
+            Loop::futureTick(static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
                 $ran = true;
                 $ranTimes++;
 
@@ -102,12 +96,11 @@ final class CronFunctionalTest extends AsyncTestCase
             });
         });
 
-        array_unshift($args, $loop);
         $args[] = $action;
         $args[] = $action;
         /** @phpstan-ignore-next-line */
         $cron = Cron::$factoryMethod(...$args);
-        $this->await($deferred->promise(), $loop, 150);
+        $this->await($deferred->promise(), 150);
 
         self::assertTrue($ran);
         self::assertSame(2, $ranTimes);
