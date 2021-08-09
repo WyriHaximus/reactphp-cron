@@ -30,5 +30,3 @@ Cron::create(
         }
     )
 );
-
-Loop::get()->run();
