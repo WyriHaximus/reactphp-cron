@@ -7,5 +7,4 @@ updates:
       labels:
           - "Dependencies 📦"
           - "PHP 🐘"
-      versioning-strategy: "increase"
       open-pull-requests-limit: 1
