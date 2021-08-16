@@ -599,29 +599,29 @@
         },
         {
             "name": "wyrihaximus/react-mutex",
-            "version": "2.0.0",
+            "version": "3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/WyriHaximus/reactphp-mutex.git",
-                "reference": "a7349a9d54b49568609ca714744255163f4a26ac"
+                "reference": "5e8a5c791f619aeac9448b90b54a446b6d32e222"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/reactphp-mutex/zipball/a7349a9d54b49568609ca714744255163f4a26ac",
-                "reference": "a7349a9d54b49568609ca714744255163f4a26ac",
+                "url": "https://api.github.com/repos/WyriHaximus/reactphp-mutex/zipball/5e8a5c791f619aeac9448b90b54a446b6d32e222",
+                "reference": "5e8a5c791f619aeac9448b90b54a446b6d32e222",
                 "shasum": ""
             },
             "require": {
                 "php": "^7.4",
                 "react/cache": "^1.1",
-                "react/event-loop": "^1.1",
+                "react/event-loop": "^1.2",
                 "react/promise": "^2.7",
                 "wyrihaximus/constants": "^1.6",
-                "wyrihaximus/react-mutex-contracts": "^1.0",
-                "wyrihaximus/ticking-promise": "^2.1"
+                "wyrihaximus/react-mutex-contracts": "^2",
+                "wyrihaximus/ticking-promise": "^3"
             },
             "require-dev": {
-                "wyrihaximus/react-mutex-test-utilities": "^1.0"
+                "wyrihaximus/react-mutex-test-utilities": "^2"
             },
             "type": "library",
             "autoload": {
@@ -636,7 +636,7 @@
             "description": "Mutex locking for ReactPHP projects",
             "support": {
                 "issues": "https://github.com/WyriHaximus/reactphp-mutex/issues",
-                "source": "https://github.com/WyriHaximus/reactphp-mutex/tree/2.0.0"
+                "source": "https://github.com/WyriHaximus/reactphp-mutex/tree/3.0.0"
             },
             "funding": [
                 {
@@ -644,20 +644,20 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-01-22T18:19:54+00:00"
+            "time": "2021-08-14T21:11:27+00:00"
         },
         {
             "name": "wyrihaximus/react-mutex-contracts",
-            "version": "1.1.0",
+            "version": "2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/WyriHaximus/reactphp-mutex-contracts.git",
-                "reference": "b5a5567128035b4c8ce924fcb36e56c72fca7775"
+                "reference": "f72ad4aff97a96ebb61fe8b0d7fd1500db630f28"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/reactphp-mutex-contracts/zipball/b5a5567128035b4c8ce924fcb36e56c72fca7775",
-                "reference": "b5a5567128035b4c8ce924fcb36e56c72fca7775",
+                "url": "https://api.github.com/repos/WyriHaximus/reactphp-mutex-contracts/zipball/f72ad4aff97a96ebb61fe8b0d7fd1500db630f28",
+                "reference": "f72ad4aff97a96ebb61fe8b0d7fd1500db630f28",
                 "shasum": ""
             },
             "require": {
@@ -680,7 +680,7 @@
             "description": "Mutex locking contracts for ReactPHP projects",
             "support": {
                 "issues": "https://github.com/WyriHaximus/reactphp-mutex-contracts/issues",
-                "source": "https://github.com/WyriHaximus/reactphp-mutex-contracts/tree/1.1.0"
+                "source": "https://github.com/WyriHaximus/reactphp-mutex-contracts/tree/2.0.0"
             },
             "funding": [
                 {
@@ -688,29 +688,29 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-04-03T20:22:48+00:00"
+            "time": "2021-07-24T20:09:38+00:00"
         },
         {
             "name": "wyrihaximus/ticking-promise",
-            "version": "2.1.0",
+            "version": "3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/WyriHaximus/TickingPromise.git",
-                "reference": "d3903d4bebe8e3c5b11464c0bb81802cdeeb3751"
+                "reference": "460d01371f42681e627194ed6c8b9eb3bed82a7a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/TickingPromise/zipball/d3903d4bebe8e3c5b11464c0bb81802cdeeb3751",
-                "reference": "d3903d4bebe8e3c5b11464c0bb81802cdeeb3751",
+                "url": "https://api.github.com/repos/WyriHaximus/TickingPromise/zipball/460d01371f42681e627194ed6c8b9eb3bed82a7a",
+                "reference": "460d01371f42681e627194ed6c8b9eb3bed82a7a",
                 "shasum": ""
             },
             "require": {
                 "php": "^8 || ^7.4",
-                "react/event-loop": "^1.0",
+                "react/event-loop": "^1.2",
                 "react/promise": "^2.8"
             },
             "require-dev": {
-                "wyrihaximus/async-test-utilities": "^3"
+                "wyrihaximus/async-test-utilities": "^3.4.24"
             },
             "type": "library",
             "autoload": {
@@ -735,7 +735,7 @@
             "description": "Wrapping ticks into a promise",
             "support": {
                 "issues": "https://github.com/WyriHaximus/TickingPromise/issues",
-                "source": "https://github.com/WyriHaximus/TickingPromise/tree/2.1.0"
+                "source": "https://github.com/WyriHaximus/TickingPromise/tree/3.0.0"
             },
             "funding": [
                 {
@@ -743,7 +743,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2020-11-25T12:43:21+00:00"
+            "time": "2021-07-25T16:43:36+00:00"
         }
     ],
     "packages-dev": [
