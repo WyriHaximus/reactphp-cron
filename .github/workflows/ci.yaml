@@ -32,7 +32,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - lint-yaml
-      - composer-install
     outputs:
       check: ${{ steps.supported-checks-matrix.outputs.check }}
     steps:
@@ -42,67 +41,29 @@ jobs:
         run: |
           printf "Checks found: %s\r\n" $(make task-list-ci)
           printf "::set-output name=check::%s" $(make task-list-ci)
-  composer-install:
-    strategy:
-      fail-fast: false
-      matrix:
-        php: ${{ fromJson(needs.supported-versions-matrix.outputs.version) }}
-        composer: [lowest, current, highest]
-    needs:
-      - lint-yaml
-      - lint-json
-      - supported-versions-matrix
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/wyrihaximusnet/php:${{ matrix.php }}-nts-buster-dev-root
-    steps:
-      - uses: actions/checkout@v1
-      - name: Cache composer packages
-        uses: actions/cache@v1
-        with:
-          path: ./vendor/
-          key: ${{ matrix.composer }}-${{ matrix.php }}-${{ hashFiles('**/composer.lock') }}
-      - name: Install Dependencies
-        run: composer update --prefer-lowest --no-progress --ansi --no-interaction --prefer-dist -o
-        if: matrix.composer == 'lowest'
-      - name: Install Dependencies
-        run: composer install --ansi --no-progress --no-interaction --prefer-dist -o
-        if: matrix.composer == 'current'
-      - name: Install Dependencies
-        run: composer update --ansi --no-progress --no-interaction --prefer-dist -o
-        if: matrix.composer == 'highest'
   qa:
     strategy:
       fail-fast: false
       matrix:
         php: ${{ fromJson(needs.supported-versions-matrix.outputs.version) }}
-        composer: [lowest, current, highest]
+        composer: [lowest, locked, highest]
         check: ${{ fromJson(needs.supported-checks-matrix.outputs.check) }}
     needs:
       - lint-yaml
       - lint-json
-      - composer-install
       - supported-checks-matrix
       - supported-versions-matrix
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/wyrihaximusnet/php:${{ matrix.php }}-nts-buster-dev-root
+      image: ghcr.io/wyrihaximusnet/php:${{ matrix.php }}-nts-alpine-dev-root
     steps:
-      - uses: actions/checkout@v1
-      - name: Cache composer packages
-        uses: actions/cache@v1
+      - uses: actions/checkout@v3
         with:
-          path: ./vendor/
-          key: ${{ matrix.composer }}-${{ matrix.php }}-${{ hashFiles('**/composer.lock') }}
-      - name: Install Dependencies
-        run: (test -f vendor && true ) || composer update --prefer-lowest --no-progress --ansi --no-interaction --prefer-dist -o
-        if: matrix.composer == 'lowest'
-      - name: Install Dependencies
-        run: (test -f vendor && true ) || composer install --ansi --no-progress --no-interaction --prefer-dist -o
-        if: matrix.composer == 'current'
-      - name: Install Dependencies
-        run: (test -f vendor && true ) || composer update --ansi --no-progress --no-interaction --prefer-dist -o
-        if: matrix.composer == 'highest'
+          fetch-depth: 0 # Required due to the way Git works, without it this action won't be able to find any or the correct tags
+      - uses: ramsey/composer-install@v2
+        with:
+          dependency-versions: ${{ matrix.composer }}
+      - run: git config --global --add safe.directory $GITHUB_WORKSPACE # Do this ourself because `actions/checkout@v3 doesn't succeed in doing this
       - name: Fetch Tags
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* || true
         if: matrix.check == 'backward-compatibility-check'

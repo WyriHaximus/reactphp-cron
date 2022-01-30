@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace WyriHaximus\React;
 
-use React\Promise\PromiseInterface;
 use WyriHaximus\React\Cron\ActionInterface;
 use WyriHaximus\React\Cron\Scheduler;
 use WyriHaximus\React\Mutex\Contracts\LockInterface;
 use WyriHaximus\React\Mutex\Contracts\MutexInterface;
 use WyriHaximus\React\Mutex\Memory;
+
+use function React\Async\async;
+use function React\Async\await;
 
 final class Cron
 {
@@ -53,24 +55,34 @@ final class Cron
                 continue;
             }
 
-            $this->perform($action);
+            /**
+             * @phpstan-ignore-next-line
+             * @psalm-suppress UndefinedInterfaceMethod
+             */
+            async(fn () => $this->perform($action))()->done();
         }
     }
 
     private function perform(ActionInterface $action): void
     {
         /**
-         * @phpstan-ignore-next-line
+         * @psalm-suppress MissingClosureParamType
+         * @psalm-suppress TooManyTemplateParams
+         * @psalm-suppress UndefinedInterfaceMethod
+         * @var ?LockInterface $lock
+         */
+        $lock = await($this->mutex->acquire($action->key(), $action->mutexTtl()));
+        if ($lock === null) {
+            return;
+        }
+
+        $action->perform();
+
+        /**
          * @psalm-suppress MissingClosureParamType
          * @psalm-suppress TooManyTemplateParams
          * @psalm-suppress UndefinedInterfaceMethod
          */
-        $this->mutex->acquire($action->key(), $action->mutexTtl())->then(function (?LockInterface $lock) use ($action): void {
-            if ($lock === null) {
-                return;
-            }
-
-            $action->perform()->then(fn (): PromiseInterface => $this->mutex->release($lock));
-        })->done();
+        $this->mutex->release($lock);
     }
 }

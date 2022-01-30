@@ -22,7 +22,7 @@ else
 		-v "`pwd`:`pwd`" \
 		-v "${COMPOSER_CACHE_DIR}:/home/app/.composer/cache" \
 		-w "`pwd`" \
-		"ghcr.io/wyrihaximusnet/php:${PHP_VERSION}-nts-alpine3.12-dev"
+		"ghcr.io/wyrihaximusnet/php:${PHP_VERSION}-nts-alpine-slim-dev"
 endif
 
 all: ## Runs everything ###
@@ -54,7 +54,7 @@ composer-require-checker: ## Ensure we require every package used in this packag
 	$(DOCKER_RUN) vendor/bin/composer-require-checker --ignore-parse-errors --ansi -vvv --config-file=./etc/qa/composer-require-checker.json
 
 composer-unused: ## Ensure we don't require any package we don't use in this package directly
-	$(DOCKER_RUN) composer unused --ansi
+	$(DOCKER_RUN) vendor/bin/composer-unused --ansi
 
 backward-compatibility-check: ## Check code for backwards incompatible changes
 	$(DOCKER_RUN) vendor/bin/roave-backward-compatibility-check || true

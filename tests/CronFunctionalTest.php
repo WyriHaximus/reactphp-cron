@@ -6,6 +6,7 @@ namespace WyriHaximus\Tests\React\Cron;
 
 use React\EventLoop\Loop;
 use React\Promise\Deferred;
+use RuntimeException;
 use WyriHaximus\AsyncTestUtilities\AsyncTestCase;
 use WyriHaximus\React\Cron;
 use WyriHaximus\React\Cron\Action;
@@ -104,5 +105,36 @@ final class CronFunctionalTest extends AsyncTestCase
 
         self::assertTrue($ran);
         self::assertSame(2, $ranTimes);
+    }
+
+    /**
+     * @param array<mixed> $args
+     *
+     * @test
+     * @dataProvider provideFactoryMethods
+     */
+    public function exceptionForwarding(string $factoryMethod, array $args): void
+    {
+        self::expectException(RuntimeException::class);
+        self::expectExceptionMessage('Action goes boom!');
+
+        $ran    = false;
+        $action = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$cron): void {
+            $ran = true;
+
+            /**
+             * @phpstan-ignore-next-line
+             */
+            $cron->stop();
+
+            throw new RuntimeException('Action goes boom!');
+        });
+
+        $args[] = $action;
+        /** @phpstan-ignore-next-line */
+        $cron = Cron::$factoryMethod(...$args);
+        Loop::run();
+
+        self::assertTrue($ran);
     }
 }

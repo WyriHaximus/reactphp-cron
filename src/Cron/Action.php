@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace WyriHaximus\React\Cron;
 
 use Cron\CronExpression;
-use React\Promise\PromiseInterface;
-
-use function React\Promise\resolve;
 
 final class Action implements ActionInterface
 {
@@ -42,10 +39,8 @@ final class Action implements ActionInterface
         return $this->expression->isDue();
     }
 
-    public function perform(): PromiseInterface
+    public function perform(): void
     {
-        return resolve(
-            ($this->performer)()
-        );
+        ($this->performer)();
     }
 }
