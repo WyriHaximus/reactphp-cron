@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace WyriHaximus\React\Cron;
 
-use React\Promise\PromiseInterface;
-
 interface ActionInterface
 {
     /**
@@ -25,7 +23,7 @@ interface ActionInterface
     public function isDue(): bool;
 
     /**
-     * Run the action returning a promise which should resolve when the action has been completed.
+     * Run the action, throwing when it is for whatever reason unsuccessful.
      */
-    public function perform(): PromiseInterface;
+    public function perform(): void;
 }
