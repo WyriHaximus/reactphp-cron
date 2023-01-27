@@ -6,28 +6,8 @@ on:
     types:
       - closed
 jobs:
-  wait-for-status-checks:
-    name: Wait for status checks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - run: sleep 13
-      - name: 'Wait for status checks'
-        id: waitforstatuschecks
-        uses: "WyriHaximus/github-action-wait-for-status@master"
-        with:
-          ignoreActions: "Wait for status checks"
-          checkInterval: 5
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-      - id: generate-version-strategy
-        if: steps.waitforstatuschecks.outputs.status != 'success'
-        name: Fail
-        run: exit 1
   generate-changelog:
     name: Generate Changelog
-    needs:
-      - wait-for-status-checks
     runs-on: ubuntu-latest
     outputs:
       changelog: ${{ steps.changelog.outputs.changelog }}
