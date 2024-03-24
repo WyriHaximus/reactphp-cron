@@ -1,0 +1,17 @@
+name: Continuous Integration
+on:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+      - 'refs/heads/v[0-9]+.[0-9]+.[0-9]+'
+  pull_request:
+## This workflow needs the `pull-request` permissions to work for the package diffing
+## Refs: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#permissions
+permissions:
+  pull-requests: write
+  contents: read
+jobs:
+  ci:
+    name: Continuous Integration
+    uses: WyriHaximus/github-workflows/.github/workflows/package.yaml@main
