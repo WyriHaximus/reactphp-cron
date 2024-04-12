@@ -62,6 +62,18 @@ $cron->stop();
 All mutexes must implement [`wyrihaximus/react-mutex`](https://packagist.org/packages/wyrihaximus/react-mutex) to provide
 additional implementations beyond the default in memory one. This is meant to do distributed locking of cron jobs.
 
+# Error handling
+
+With promise v3 uncaught rejected promises will no longer bubble up. As a result the running con instance will now emit
+errors when they occur and those must be handled.
+
+```php
+$cron = Cron::create(...$actions);
+$cron->on('error', static function (Throwable $throwable): void {
+    // Handle error
+});
+```
+
 # License
 
 The MIT License (MIT)

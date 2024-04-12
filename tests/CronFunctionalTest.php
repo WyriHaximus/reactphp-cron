@@ -7,17 +7,20 @@ namespace WyriHaximus\Tests\React\Cron;
 use React\EventLoop\Loop;
 use React\Promise\Deferred;
 use RuntimeException;
+use Throwable;
 use WyriHaximus\AsyncTestUtilities\AsyncTestCase;
+use WyriHaximus\AsyncTestUtilities\TimeOut;
 use WyriHaximus\React\Cron;
 use WyriHaximus\React\Cron\Action;
 use WyriHaximus\React\Mutex\Memory;
 
+use function React\Async\await;
+
+#[TimeOut(300)]
 final class CronFunctionalTest extends AsyncTestCase
 {
-    /**
-     * @return iterable<string, array<mixed>>
-     */
-    public function provideFactoryMethods(): iterable
+    /** @return iterable<string, array<mixed>> */
+    public static function provideFactoryMethods(): iterable
     {
         yield 'default' => [
             'create',
@@ -52,17 +55,15 @@ final class CronFunctionalTest extends AsyncTestCase
                 return;
             }
 
-            /**
-             * @phpstan-ignore-next-line
-             */
+            /** @phpstan-ignore-next-line */
             $cron->stop();
-            $deferred->resolve();
+            Loop::futureTick(static fn () => $deferred->resolve(null));
         });
 
         $args[] = $action;
         /** @phpstan-ignore-next-line */
         $cron = Cron::$factoryMethod(...$args);
-        $this->await($deferred->promise(), 150);
+        await($deferred->promise());
 
         self::assertTrue($ran);
         self::assertSame(2, $ranTimes);
@@ -81,27 +82,23 @@ final class CronFunctionalTest extends AsyncTestCase
         $cron     = null;
         $deferred = new Deferred();
         $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
-            Loop::futureTick(static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
-                $ran = true;
-                $ranTimes++;
+            $ran = true;
+            $ranTimes++;
 
-                if ($ranTimes < 2) {
-                    return;
-                }
+            if ($ranTimes < 2) {
+                return;
+            }
 
-                /**
-                 * @phpstan-ignore-next-line
-                 */
-                $cron->stop();
-                $deferred->resolve();
-            });
+            /** @phpstan-ignore-next-line */
+            $cron->stop();
+            Loop::futureTick(static fn () => $deferred->resolve(null));
         });
 
         $args[] = $action;
         $args[] = $action;
         /** @phpstan-ignore-next-line */
         $cron = Cron::$factoryMethod(...$args);
-        $this->await($deferred->promise(), 150);
+        await($deferred->promise());
 
         self::assertTrue($ran);
         self::assertSame(2, $ranTimes);
@@ -115,16 +112,15 @@ final class CronFunctionalTest extends AsyncTestCase
      */
     public function exceptionForwarding(string $factoryMethod, array $args): void
     {
-        self::expectException(RuntimeException::class);
-        self::expectExceptionMessage('Action goes boom!');
+        $error    = null;
+        $ran      = false;
+        $deferred = new Deferred();
+        $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$cron, $deferred): void {
+            Loop::futureTick(static fn () => $deferred->resolve(null));
 
-        $ran    = false;
-        $action = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$cron): void {
             $ran = true;
 
-            /**
-             * @phpstan-ignore-next-line
-             */
+            /** @phpstan-ignore-next-line */
             $cron->stop();
 
             throw new RuntimeException('Action goes boom!');
@@ -133,8 +129,14 @@ final class CronFunctionalTest extends AsyncTestCase
         $args[] = $action;
         /** @phpstan-ignore-next-line */
         $cron = Cron::$factoryMethod(...$args);
-        Loop::run();
+        $cron->on('error', static function (Throwable $throwable) use (&$error): void {
+            $error = $throwable;
+        });
+
+        await($deferred->promise());
 
         self::assertTrue($ran);
+        self::assertInstanceOf(RuntimeException::class, $error);
+        self::assertSame('Action goes boom!', $error->getMessage());
     }
 }

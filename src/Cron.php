@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace WyriHaximus\React;
 
+use Evenement\EventEmitterInterface;
+use Evenement\EventEmitterTrait;
+use React\EventLoop\Loop;
+use Throwable;
 use WyriHaximus\React\Cron\ActionInterface;
 use WyriHaximus\React\Cron\Scheduler;
 use WyriHaximus\React\Mutex\Contracts\LockInterface;
@@ -13,20 +17,20 @@ use WyriHaximus\React\Mutex\Memory;
 use function React\Async\async;
 use function React\Async\await;
 
-final class Cron
+/** @event error On caught Throws from action handling */
+final class Cron implements EventEmitterInterface
 {
+    use EventEmitterTrait;
+
     /** @var array<ActionInterface> */
     private array $actions;
 
     private Scheduler $scheduler;
 
-    private MutexInterface $mutex;
-
-    private function __construct(MutexInterface $mutex, ActionInterface ...$actions)
+    private function __construct(private MutexInterface $mutex, ActionInterface ...$actions)
     {
         $this->scheduler = new Scheduler();
         $this->actions   = $actions;
-        $this->mutex     = $mutex;
 
         $this->scheduler->schedule(function (): void {
             $this->tick();
@@ -55,34 +59,34 @@ final class Cron
                 continue;
             }
 
-            /**
-             * @phpstan-ignore-next-line
-             * @psalm-suppress UndefinedInterfaceMethod
-             */
-            async(fn () => $this->perform($action))()->done();
+            Loop::futureTick(async(fn () => $this->perform($action)));
         }
     }
 
     private function perform(ActionInterface $action): void
     {
-        /**
-         * @psalm-suppress MissingClosureParamType
-         * @psalm-suppress TooManyTemplateParams
-         * @psalm-suppress UndefinedInterfaceMethod
-         * @var ?LockInterface $lock
-         */
-        $lock = await($this->mutex->acquire($action->key(), $action->mutexTtl()));
-        if ($lock === null) {
-            return;
+        try {
+            /**
+             * @psalm-suppress MissingClosureParamType
+             * @psalm-suppress TooManyTemplateParams
+             * @psalm-suppress UndefinedInterfaceMethod
+             * @var ?LockInterface $lock
+             */
+            $lock = await($this->mutex->acquire($action->key(), $action->mutexTtl()));
+            if ($lock === null) {
+                return;
+            }
+
+            $action->perform();
+
+            /**
+             * @psalm-suppress MissingClosureParamType
+             * @psalm-suppress TooManyTemplateParams
+             * @psalm-suppress UndefinedInterfaceMethod
+             */
+            $this->mutex->release($lock);
+        } catch (Throwable $throwable) { /** @phpstan-ignore-line */
+            $this->emit('error', [$throwable, $action]);
         }
-
-        $action->perform();
-
-        /**
-         * @psalm-suppress MissingClosureParamType
-         * @psalm-suppress TooManyTemplateParams
-         * @psalm-suppress UndefinedInterfaceMethod
-         */
-        $this->mutex->release($lock);
     }
 }

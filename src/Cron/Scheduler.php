@@ -26,8 +26,8 @@ final class Scheduler
     /** @var callable[] */
     private array $ticks = [];
 
-    private ?TimerInterface $timer = null;
-    private bool $active           = self::ACTIVE;
+    private TimerInterface|null $timer = null;
+    private bool $active               = self::ACTIVE;
 
     public function __construct()
     {
