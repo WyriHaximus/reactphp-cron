@@ -6,10 +6,11 @@
     "php": "^8.4",
     "dragonmantank/cron-expression": "^3.4.0",
     "evenement/evenement": "^3.0.2",
+    "lcobucci/clock": "^3.2",
+    "psr/clock": "^1.0",
     "react/async": "^4.3",
     "react/event-loop": "^1.5",
     "react/promise": "^3.2",
-    "wyrihaximus/constants": "^1.6",
     "wyrihaximus/react-mutex": "^3.2",
     "wyrihaximus/react-mutex-contracts": "^2.3"
   },
