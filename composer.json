@@ -6,6 +6,8 @@
         "php": "^8.2",
         "dragonmantank/cron-expression": "^3.3.3",
         "evenement/evenement": "^3.0",
+        "lcobucci/clock": "^3.2",
+        "psr/clock": "^1.0",
         "react/async": "^4.2",
         "react/event-loop": "^1.5",
         "react/promise": "^3.1",
@@ -28,7 +30,10 @@
     "autoload-dev": {
         "psr-4": {
             "WyriHaximus\\Tests\\React\\Cron\\": "tests/"
-        }
+        },
+        "files": [
+            "tests/bootstrap.php"
+        ]
     },
     "config": {
         "allow-plugins": {
