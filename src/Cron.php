@@ -9,6 +9,7 @@ use Evenement\EventEmitterTrait;
 use React\EventLoop\Loop;
 use Throwable;
 use WyriHaximus\React\Cron\ActionInterface;
+use WyriHaximus\React\Cron\RunOnStartUpAction;
 use WyriHaximus\React\Cron\Scheduler;
 use WyriHaximus\React\Mutex\Contracts\LockInterface;
 use WyriHaximus\React\Mutex\Contracts\MutexInterface;
@@ -31,6 +32,14 @@ final class Cron implements EventEmitterInterface
     {
         $this->scheduler = new Scheduler();
         $this->actions   = $actions;
+
+        foreach ($this->actions as $action) {
+            if (! ($action instanceof RunOnStartUpAction)) {
+                continue;
+            }
+
+            Loop::futureTick(async(fn () => $this->perform($action)));
+        }
 
         $this->scheduler->schedule(function (): void {
             $this->tick();
