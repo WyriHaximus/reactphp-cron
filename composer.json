@@ -15,7 +15,7 @@
         "wyrihaximus/react-mutex-contracts": "^2.2"
     },
     "require-dev": {
-        "wyrihaximus/async-test-utilities": "^8.0.1"
+        "wyrihaximus/async-test-utilities": "^8.0.1 || ^9.0.0"
     },
     "conflict": {
         "azjezz/psl": "<2"
