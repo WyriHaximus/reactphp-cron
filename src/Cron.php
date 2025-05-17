@@ -75,12 +75,7 @@ final class Cron implements EventEmitterInterface
     private function perform(ActionInterface $action): void
     {
         try {
-            /**
-             * @psalm-suppress MissingClosureParamType
-             * @psalm-suppress TooManyTemplateParams
-             * @psalm-suppress UndefinedInterfaceMethod
-             * @var ?LockInterface $lock
-             */
+            /** @var ?LockInterface $lock */
             $lock = await($this->mutex->acquire($action->key(), $action->mutexTtl()));
             if ($lock === null) {
                 return;
@@ -88,13 +83,8 @@ final class Cron implements EventEmitterInterface
 
             $action->perform();
 
-            /**
-             * @psalm-suppress MissingClosureParamType
-             * @psalm-suppress TooManyTemplateParams
-             * @psalm-suppress UndefinedInterfaceMethod
-             */
             $this->mutex->release($lock);
-        } catch (Throwable $throwable) { /** @phpstan-ignore-line */
+        } catch (Throwable $throwable) {
             $this->emit('error', [$throwable, $action]);
         }
     }
