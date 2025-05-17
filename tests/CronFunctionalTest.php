@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace WyriHaximus\Tests\React\Cron;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use React\EventLoop\Loop;
 use React\Promise\Deferred;
 use RuntimeException;
@@ -35,12 +37,9 @@ final class CronFunctionalTest extends AsyncTestCase
         ];
     }
 
-    /**
-     * @param array<mixed> $args
-     *
-     * @test
-     * @dataProvider provideFactoryMethods
-     */
+    /** @param array<mixed> $args */
+    #[Test]
+    #[DataProvider('provideFactoryMethods')]
     public function scheduling(string $factoryMethod, array $args): void
     {
         $ran      = false;
@@ -69,12 +68,9 @@ final class CronFunctionalTest extends AsyncTestCase
         self::assertSame(2, $ranTimes);
     }
 
-    /**
-     * @param array<mixed> $args
-     *
-     * @test
-     * @dataProvider provideFactoryMethods
-     */
+    /** @param array<mixed> $args */
+    #[Test]
+    #[DataProvider('provideFactoryMethods')]
     public function mutexLockOnlyAllowsTheSameActionOnce(string $factoryMethod, array $args): void
     {
         $ran      = false;
@@ -104,18 +100,15 @@ final class CronFunctionalTest extends AsyncTestCase
         self::assertSame(2, $ranTimes);
     }
 
-    /**
-     * @param array<mixed> $args
-     *
-     * @test
-     * @dataProvider provideFactoryMethods
-     */
+    /** @param array<mixed> $args */
+    #[Test]
+    #[DataProvider('provideFactoryMethods')]
     public function exceptionForwarding(string $factoryMethod, array $args): void
     {
         $error    = null;
         $ran      = false;
         $deferred = new Deferred();
-        $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$cron, $deferred): void {
+        $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$cron, $deferred): never {
             Loop::futureTick(static fn () => $deferred->resolve(null));
 
             $ran = true;
@@ -129,6 +122,7 @@ final class CronFunctionalTest extends AsyncTestCase
         $args[] = $action;
         /** @phpstan-ignore-next-line */
         $cron = Cron::$factoryMethod(...$args);
+        self::assertInstanceOf(Cron::class, $cron);
         $cron->on('error', static function (Throwable $throwable) use (&$error): void {
             $error = $throwable;
         });
@@ -140,12 +134,9 @@ final class CronFunctionalTest extends AsyncTestCase
         self::assertSame('Action goes boom!', $error->getMessage());
     }
 
-    /**
-     * @param array<mixed> $args
-     *
-     * @test
-     * @dataProvider provideFactoryMethods
-     */
+    /** @param array<mixed> $args */
+    #[Test]
+    #[DataProvider('provideFactoryMethods')]
     public function runOnStartUp(string $factoryMethod, array $args): void
     {
         $ran      = false;

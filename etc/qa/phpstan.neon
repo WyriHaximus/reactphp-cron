@@ -1,2 +1,5 @@
-includes:
-	- ../../vendor/wyrihaximus/async-test-utilities/rules.neon
+parameters:
+	ignoreErrors:
+		-
+			identifier: shipmonk.checkedExceptionInCallable
+			path: ../../tests/CronFunctionalTest.php

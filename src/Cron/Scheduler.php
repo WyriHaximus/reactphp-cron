@@ -7,8 +7,8 @@ namespace WyriHaximus\React\Cron;
 use React\EventLoop\Loop;
 use React\EventLoop\TimerInterface;
 
+use function date;
 use function microtime;
-use function Safe\date;
 
 use const WyriHaximus\Constants\Boolean\TRUE_;
 use const WyriHaximus\Constants\Numeric\ONE;
@@ -16,12 +16,12 @@ use const WyriHaximus\Constants\Numeric\ZERO;
 
 final class Scheduler
 {
-    private const TIER_SLOW      = 55;
-    private const TIER_MEDIUM    = 58;
-    private const TIER_FAST      = 59;
-    private const MINUTE_SECONDS = 60;
-    private const ACTIVE         = true;
-    private const INACTIVE       = false;
+    private const int TIER_SLOW      = 55;
+    private const int TIER_MEDIUM    = 58;
+    private const int TIER_FAST      = 59;
+    private const int MINUTE_SECONDS = 60;
+    private const bool ACTIVE        = true;
+    private const bool INACTIVE      = false;
 
     /** @var callable[] */
     private array $ticks = [];
@@ -47,7 +47,7 @@ final class Scheduler
 
     private function hasDrifted(float $time): bool
     {
-        return date('s', (int) $time) > ZERO;
+        return (int) date('s', (int) $time) > ZERO;
     }
 
     private function tick(): void
