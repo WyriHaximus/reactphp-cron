@@ -9,7 +9,7 @@
         "react/async": "^4.2",
         "react/event-loop": "^1.5",
         "react/promise": "^3.1",
-        "thecodingmachine/safe": "^2.4",
+        "thecodingmachine/safe": "^2.4 || ^3.0",
         "wyrihaximus/constants": "^1.6",
         "wyrihaximus/react-mutex": "^3.2",
         "wyrihaximus/react-mutex-contracts": "^2.2"
