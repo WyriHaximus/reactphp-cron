@@ -6,21 +6,42 @@ namespace WyriHaximus\Tests\React\Cron;
 
 use WyriHaximus\AsyncTestUtilities\AsyncTestCase;
 use WyriHaximus\React\Cron\Action;
+use WyriHaximus\React\Cron\ActionInterface;
+use WyriHaximus\React\Cron\RunOnStartUpAction;
 
 final class ActionTest extends AsyncTestCase
 {
-    public function testIsDue(): void
+    /** @return iterable<string, array<class-string<ActionInterface>>> */
+    public static function actionProvider(): iterable
     {
-        $action = new Action('name', 0.1, '* * * * *', static function (): void {
+        yield 'action' => [Action::class];
+        yield 'runs-on-startup-action' => [RunOnStartUpAction::class];
+    }
+
+    /**
+     * @param class-string<ActionInterface> $actionClass
+     *
+     * @dataProvider actionProvider
+     * @test
+     */
+    public function isDue(string $actionClass): void
+    {
+        $action = new $actionClass('name', 0.1, '* * * * *', static function (): void {
         });
 
         self::assertTrue($action->isDue());
     }
 
-    public function testPerform(): void
+    /**
+     * @param class-string<ActionInterface> $actionClass
+     *
+     * @dataProvider actionProvider
+     * @test
+     */
+    public function perform(string $actionClass): void
     {
         $ran    = false;
-        $action = new Action('name', 0.1, '* * * * *', static function () use (&$ran): void {
+        $action = new $actionClass('name', 0.1, '* * * * *', static function () use (&$ran): void {
             $ran = true;
         });
 

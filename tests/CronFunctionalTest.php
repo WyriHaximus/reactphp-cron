@@ -139,4 +139,33 @@ final class CronFunctionalTest extends AsyncTestCase
         self::assertInstanceOf(RuntimeException::class, $error);
         self::assertSame('Action goes boom!', $error->getMessage());
     }
+
+    /**
+     * @param array<mixed> $args
+     *
+     * @test
+     * @dataProvider provideFactoryMethods
+     */
+    public function runOnStartUp(string $factoryMethod, array $args): void
+    {
+        $ran      = false;
+        $ranTimes = 0;
+        $cron     = null;
+        $deferred = new Deferred();
+        $action   = new Cron\RunOnStartUpAction('name', 0.1, '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
+            $ran = true;
+            $ranTimes++;
+            /** @phpstan-ignore-next-line */
+            $cron->stop();
+            Loop::futureTick(static fn () => $deferred->resolve(null));
+        });
+
+        $args[] = $action;
+        /** @phpstan-ignore-next-line */
+        $cron = Cron::$factoryMethod(...$args);
+        await($deferred->promise());
+
+        self::assertTrue($ran);
+        self::assertSame(1, $ranTimes);
+    }
 }

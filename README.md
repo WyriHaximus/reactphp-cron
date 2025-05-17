@@ -27,7 +27,7 @@ use function React\Promise\resolve;
 
 Cron::create(
     new Action(
-        'Hour', // Identifier used for mutex locking locking
+        'Hour', // Identifier used for mutex locking
         60, // TTL for the mutex lock, always set this way higher than the expected execution time, but low enough any failures during the run will cause issues
         '@hourly', // The cron expression used to schedule this action
         function (): PromiseInterface { // The callable ran when this action is due according to it's schedule
@@ -74,11 +74,42 @@ $cron->on('error', static function (Throwable $throwable): void {
 });
 ```
 
+# Run an action on start up and it's normal schedule
+
+In certain edge causes you want to start an action at it's normal schedule and on start up. To facilitate that the
+`RunOnStartUpAction` will run at both moments. It's create exactly the same as an normal action, equally respects any
+mutex, but it will run one additional time when the event loop starts:
+
+```php
+// Normal action
+new Action(
+    'Hour', // Identifier used for mutex locking
+    60, // TTL for the mutex lock, always set this way higher than the expected execution time, but low enough any failures during the run will cause issues
+    '@hourly', // The cron expression used to schedule this action
+    function (): PromiseInterface { // The callable ran when this action is due according to it's schedule
+        echo 'Another hour has passed!', PHP_EOL;
+
+        return resolve(true); // This callable MUST return a promise, which is used for releasing the mutex lock
+    }
+);
+// Run on start up action
+new RunOnStartUpAction(
+    'Hour', // Identifier used for mutex locking
+    60, // TTL for the mutex lock, always set this way higher than the expected execution time, but low enough any failures during the run will cause issues
+    '@hourly', // The cron expression used to schedule this action
+    function (): PromiseInterface { // The callable ran when this action is due according to it's schedule
+        echo 'Another hour has passed!', PHP_EOL;
+
+        return resolve(true); // This callable MUST return a promise, which is used for releasing the mutex lock
+    }
+);
+```
+
 # License
 
 The MIT License (MIT)
 
-Copyright (c) 2023 Cees-Jan Kiewiet
+Copyright (c) 2025 Cees-Jan Kiewiet
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
