@@ -15,7 +15,7 @@
     },
     "require-dev": {
         "wyrihaximus/async-test-utilities": "^9.1.0",
-        "wyrihaximus/makefiles": "^0.4.2"
+        "wyrihaximus/makefiles": "^0.4.3"
     },
     "conflict": {
         "azjezz/psl": "<2"

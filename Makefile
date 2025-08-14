@@ -26,6 +26,7 @@ else
 		-v "`pwd`:`pwd`" \
 		-v "${COMPOSER_CACHE_DIR}:${COMPOSER_CONTAINER_CACHE_DIR}" \
 		-w "`pwd`" \
+		-e OTEL_PHP_FIBERS_ENABLED="true" \
 		"${CONTAINER_NAME}"
 endif
 
@@ -45,10 +46,10 @@ rector-upgrade: ## Upgrade any automatically upgradable old code ###
 	$(DOCKER_RUN) vendor/bin/rector -c ./etc/qa/rector.php
 
 cs-fix: ## Fix any automatically fixable code style issues ###
-	$(DOCKER_RUN) vendor/bin/phpcbf --parallel=$(THREADS) --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml || $(DOCKER_RUN) vendor/bin/phpcbf --parallel=$(THREADS) --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml || $(DOCKER_RUN) vendor/bin/phpcbf --parallel=$(THREADS) --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml -vvvv
+	$(DOCKER_RUN) vendor/bin/phpcbf --parallel=1 --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml || $(DOCKER_RUN) vendor/bin/phpcbf --parallel=1 --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml || $(DOCKER_RUN) vendor/bin/phpcbf --parallel=1 --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml -vvvv
 
 cs: ## Check the code for code style issues ##*LCH*##
-	$(DOCKER_RUN) vendor/bin/phpcs --parallel=$(THREADS) --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml
+	$(DOCKER_RUN) vendor/bin/phpcs --parallel=1 --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml
 
 stan: ## Run static analysis (PHPStan) ##*LCH*##
 	$(DOCKER_RUN) vendor/bin/phpstan analyse etc src tests --level max --ansi -c ./etc/qa/phpstan.neon
