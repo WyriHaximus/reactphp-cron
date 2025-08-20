@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e3c686bba8907be433b472c9dddf4377",
+    "content-hash": "1c550b3bc57eee9133f63e1faf24173f",
     "packages": [
         {
             "name": "dragonmantank/cron-expression",
@@ -9626,25 +9626,25 @@
         },
         {
             "name": "wyrihaximus/makefiles",
-            "version": "0.5.0",
+            "version": "0.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/WyriHaximus/Makefiles.git",
-                "reference": "5717bc0de6496a12734cf3f2de20859a692297f0"
+                "reference": "f29f168198c37cb410b85bf08c2c81aab32e322b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/Makefiles/zipball/5717bc0de6496a12734cf3f2de20859a692297f0",
-                "reference": "5717bc0de6496a12734cf3f2de20859a692297f0",
+                "url": "https://api.github.com/repos/WyriHaximus/Makefiles/zipball/f29f168198c37cb410b85bf08c2c81aab32e322b",
+                "reference": "f29f168198c37cb410b85bf08c2c81aab32e322b",
                 "shasum": ""
             },
             "require": {
                 "composer-plugin-api": "^2",
-                "ext-json": "^8.3",
-                "php": "^8.3"
+                "ext-json": "^8.4",
+                "php": "^8.4"
             },
             "require-dev": {
-                "wyrihaximus/test-utilities": "^7.5.2"
+                "wyrihaximus/test-utilities": "^8.0.0"
             },
             "type": "composer-plugin",
             "extra": {
@@ -9665,10 +9665,10 @@
                     "email": "ceesjank@gmail.com"
                 }
             ],
-            "description": "🛠️ Test utilities for api-clients packages",
+            "description": "🧱 Makefile building blocks",
             "support": {
                 "issues": "https://github.com/WyriHaximus/Makefiles/issues",
-                "source": "https://github.com/WyriHaximus/Makefiles/tree/0.5.0"
+                "source": "https://github.com/WyriHaximus/Makefiles/tree/0.6.0"
             },
             "funding": [
                 {
@@ -9676,7 +9676,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-08-15T05:34:56+00:00"
+            "time": "2025-08-20T07:50:55+00:00"
         },
         {
             "name": "wyrihaximus/phpstan-react",
