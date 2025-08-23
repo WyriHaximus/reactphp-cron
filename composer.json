@@ -1,56 +1,57 @@
 {
-    "name": "wyrihaximus/react-cron",
-    "description": "⏱️ Cronlike scheduler running inside the ReactPHP Event Loop",
-    "license": "MIT",
-    "require": {
-        "php": "^8.3",
-        "dragonmantank/cron-expression": "^3.4.0",
-        "evenement/evenement": "^3.0.2",
-        "react/async": "^4.3",
-        "react/event-loop": "^1.5",
-        "react/promise": "^3.2",
-        "wyrihaximus/constants": "^1.6",
-        "wyrihaximus/react-mutex": "^3.2",
-        "wyrihaximus/react-mutex-contracts": "^2.3"
-    },
-    "require-dev": {
-        "wyrihaximus/async-test-utilities": "^9.1.0",
-        "wyrihaximus/makefiles": "^0.5.0"
-    },
-    "conflict": {
-        "azjezz/psl": "<2"
-    },
-    "autoload": {
-        "psr-4": {
-            "WyriHaximus\\React\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "WyriHaximus\\Tests\\React\\Cron\\": "tests/"
-        }
-    },
-    "config": {
-        "allow-plugins": {
-            "composer/package-versions-deprecated": true,
-            "dealerdirect/phpcodesniffer-composer-installer": true,
-            "ergebnis/composer-normalize": true,
-            "icanhazstring/composer-unused": true,
-            "infection/extension-installer": true,
-            "phpstan/extension-installer": true,
-            "wyrihaximus/makefiles": true
-        },
-        "platform": {
-            "php": "8.3.13"
-        },
-        "sort-packages": true
-    },
-    "scripts": {
-        "post-install-cmd": [
-            "composer normalize"
-        ],
-        "post-update-cmd": [
-            "composer normalize"
-        ]
+  "name": "wyrihaximus/react-cron",
+  "description": "\u23f1\ufe0f Cronlike scheduler running inside the ReactPHP Event Loop",
+  "license": "MIT",
+  "require": {
+    "php": "^8.4",
+    "dragonmantank/cron-expression": "^3.4.0",
+    "evenement/evenement": "^3.0.2",
+    "react/async": "^4.3",
+    "react/event-loop": "^1.5",
+    "react/promise": "^3.2",
+    "wyrihaximus/constants": "^1.6",
+    "wyrihaximus/react-mutex": "^3.2",
+    "wyrihaximus/react-mutex-contracts": "^2.3"
+  },
+  "require-dev": {
+    "wyrihaximus/async-test-utilities": "^10.0.0",
+    "wyrihaximus/makefiles": "^0.6.0"
+  },
+  "conflict": {
+    "azjezz/psl": "<2"
+  },
+  "autoload": {
+    "psr-4": {
+      "WyriHaximus\\React\\": "src/"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "WyriHaximus\\Tests\\React\\Cron\\": "tests/"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "composer/package-versions-deprecated": true,
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "ergebnis/composer-normalize": true,
+      "icanhazstring/composer-unused": true,
+      "infection/extension-installer": true,
+      "phpstan/extension-installer": true,
+      "wyrihaximus/makefiles": true,
+      "wyrihaximus/test-utilities": true
+    },
+    "platform": {
+      "php": "8.4.13"
+    },
+    "sort-packages": true
+  },
+  "scripts": {
+    "post-install-cmd": [
+      "make on-install-or-update || true"
+    ],
+    "post-update-cmd": [
+      "make on-install-or-update || true"
+    ]
+  }
 }
