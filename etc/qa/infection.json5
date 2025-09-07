@@ -27,8 +27,5 @@
         "PublicVisibility": false,
         "FunctionCallRemoval": false,
         "Identical": false
-    },
-    "phpUnit": {
-        "configDir": "./etc/qa/"
     }
 }
