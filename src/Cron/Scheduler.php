@@ -11,14 +11,18 @@ use React\EventLoop\TimerInterface;
 
 final class Scheduler
 {
-    private const int TIER_SLOW      = 55;
-    private const int TIER_MEDIUM    = 58;
-    private const int TIER_FAST      = 59;
-    private const int MINUTE_SECONDS = 60;
-    private const bool ACTIVE        = true;
-    private const bool INACTIVE      = false;
+    private const int TIER_SLOW                          = 55;
+    private const int TIER_MEDIUM                        = 58;
+    private const int TIER_FAST                          = 59;
+    private const float INTERVAL_SLOW_TO_MEDIUM          = 1.3;
+    private const float INTERVAL_MEDIUM_TO_FAST          = 0.13;
+    private const float INTERVAL_FAST                    = 0.001;
+    private const int MINUTE_SECONDS                     = 60;
+    private const bool ACTIVE                            = true;
+    private const bool INACTIVE                          = false;
+    private const int FIRST_SECOND_AFTER_OUR_TICK_WINDOW = 1;
 
-    /** @var callable[] */
+    /** @var array<callable> */
     private array $ticks = [];
 
     private TimerInterface|null $timer = null;
@@ -69,8 +73,8 @@ final class Scheduler
 
         $currentSecond = (int) $this->clock->now()->format('s');
 
-        if ($currentSecond >= 1 && $currentSecond <= self::TIER_SLOW) {
-            $this->timer = Loop::addTimer(self::TIER_SLOW - $currentSecond, function (): void {
+        if ($currentSecond >= self::FIRST_SECOND_AFTER_OUR_TICK_WINDOW && $currentSecond <= self::TIER_SLOW) {
+            $this->timer = Loop::addTimer(self::INTERVAL_SLOW_TO_MEDIUM, function (): void {
                 $this->timer = null;
                 $this->align();
             });
@@ -79,7 +83,7 @@ final class Scheduler
         }
 
         if ($currentSecond > self::TIER_SLOW && $currentSecond <= self::TIER_MEDIUM) {
-            $this->timer = Loop::addTimer(1, function (): void {
+            $this->timer = Loop::addTimer(self::INTERVAL_MEDIUM_TO_FAST, function (): void {
                 $this->timer = null;
                 $this->align();
             });
@@ -88,7 +92,7 @@ final class Scheduler
         }
 
         if ($currentSecond === self::TIER_FAST) {
-            $this->timer = Loop::addTimer(0.001, function (): void {
+            $this->timer = Loop::addTimer(self::INTERVAL_FAST, function (): void {
                 $this->timer = null;
                 $this->align();
             });
