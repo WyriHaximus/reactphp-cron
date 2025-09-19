@@ -10,20 +10,22 @@ use React\EventLoop\TimerInterface;
 use function date;
 use function microtime;
 
-use const WyriHaximus\Constants\Boolean\TRUE_;
-use const WyriHaximus\Constants\Numeric\ONE;
-use const WyriHaximus\Constants\Numeric\ZERO;
-
 final class Scheduler
 {
-    private const int TIER_SLOW      = 55;
-    private const int TIER_MEDIUM    = 58;
-    private const int TIER_FAST      = 59;
-    private const int MINUTE_SECONDS = 60;
-    private const bool ACTIVE        = true;
-    private const bool INACTIVE      = false;
+    private const int TIER_SLOW                          = 55;
+    private const int TIER_MEDIUM                        = 58;
+    private const int TIER_FAST                          = 59;
+    private const float INTERVAL_SLOW_TO_MEDIUM          = 1.3;
+    private const float INTERVAL_MEDIUM_TO_FAST          = 0.13;
+    private const float INTERVAL_FAST                    = 0.001;
+    private const int MINUTE_SECONDS                     = 60;
+    private const bool ACTIVE                            = true;
+    private const bool INACTIVE                          = false;
+    private const bool MICROTIME_AS_FLOAT                = true;
+    private const int HAS_DRIFTED_ABOVE_FIRST_SECOND     = 0;
+    private const int FIRST_SECOND_AFTER_OUR_TICK_WINDOW = 1;
 
-    /** @var callable[] */
+    /** @var array<callable> */
     private array $ticks = [];
 
     private TimerInterface|null $timer = null;
@@ -42,12 +44,12 @@ final class Scheduler
 
     private function time(): float
     {
-        return microtime(TRUE_);
+        return microtime(self::MICROTIME_AS_FLOAT);
     }
 
     private function hasDrifted(float $time): bool
     {
-        return (int) date('s', (int) $time) > ZERO;
+        return (int) date('s', (int) $time) > self::HAS_DRIFTED_ABOVE_FIRST_SECOND;
     }
 
     private function tick(): void
@@ -78,8 +80,8 @@ final class Scheduler
 
         $currentSecond = (int) date('s', (int) $this->time());
 
-        if ($currentSecond >= ONE && $currentSecond <= self::TIER_SLOW) {
-            $this->timer = Loop::addTimer(self::TIER_SLOW - $currentSecond, function (): void {
+        if ($currentSecond >= self::FIRST_SECOND_AFTER_OUR_TICK_WINDOW && $currentSecond <= self::TIER_SLOW) {
+            $this->timer = Loop::addTimer(self::INTERVAL_SLOW_TO_MEDIUM, function (): void {
                 $this->timer = null;
                 $this->align();
             });
@@ -88,7 +90,7 @@ final class Scheduler
         }
 
         if ($currentSecond > self::TIER_SLOW && $currentSecond <= self::TIER_MEDIUM) {
-            $this->timer = Loop::addTimer(ONE, function (): void {
+            $this->timer = Loop::addTimer(self::INTERVAL_MEDIUM_TO_FAST, function (): void {
                 $this->timer = null;
                 $this->align();
             });
@@ -97,7 +99,7 @@ final class Scheduler
         }
 
         if ($currentSecond === self::TIER_FAST) {
-            $this->timer = Loop::addTimer(0.001, function (): void {
+            $this->timer = Loop::addTimer(self::INTERVAL_FAST, function (): void {
                 $this->timer = null;
                 $this->align();
             });
@@ -105,7 +107,9 @@ final class Scheduler
             return;
         }
 
-        $this->tick();
+        Loop::futureTick(function (): void {
+            $this->tick();
+        });
 
         $this->timer = Loop::addPeriodicTimer(self::MINUTE_SECONDS, function (): void {
             $this->tick();
