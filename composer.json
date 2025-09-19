@@ -9,7 +9,6 @@
     "react/async": "^4.3",
     "react/event-loop": "^1.5",
     "react/promise": "^3.2",
-    "wyrihaximus/constants": "^1.6",
     "wyrihaximus/react-mutex": "^3.2",
     "wyrihaximus/react-mutex-contracts": "^2.3"
   },
