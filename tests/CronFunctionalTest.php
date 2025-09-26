@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace WyriHaximus\Tests\React\Cron;
 
-use Lcobucci\Clock\SystemClock;
+use Lcobucci\Clock\FrozenClock;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Clock\ClockInterface;
@@ -28,40 +28,49 @@ final class CronFunctionalTest extends AsyncTestCase
     /** @return iterable<string, array<mixed>> */
     public static function provideFactoryMethods(): iterable
     {
-        $clock = SystemClock::fromUTC();
-
+        foreach ([
+            'now' => [],
+        ] as $setTo => $clockTickets)
         yield 'default' => [
             'create',
             [],
-            $clock,
+            self::getClock($setTo),
             true,
         ];
 
-        yield 'default_with_system_clock' => [
-            'createWithClock',
-            [$clock],
-            $clock,
-            false,
-        ];
+        yield 'default_with_system_clock' => (static function (string $setTo): array {
+            $clock = self::getClock($setTo);
+
+            return [
+                'createWithClock',
+                [$clock],
+                $clock,
+                false,
+            ];
+        })($setTo);
 
         yield 'default_with_memory_mutex' => [
             'createWithMutex',
             [
                 new Memory(),
             ],
-            $clock,
+            self::getClock($setTo),
             true,
         ];
 
-        yield 'default_with_system_clock_and_memory_mutex' => [
-            'createWithClockAndMutex',
-            [
-                new Memory(),
+        yield 'default_with_system_clock_and_memory_mutex' => (static function (string $setTo): array {
+            $clock = self::getClock($setTo);
+
+            return [
+                'createWithClockAndMutex',
+                [
+                    new Memory(),
+                    $clock,
+                ],
                 $clock,
-            ],
-            $clock,
-            false,
-        ];
+                false,
+            ];
+        })($setTo);
     }
 
     /** @param array<mixed> $args */
@@ -219,5 +228,13 @@ final class CronFunctionalTest extends AsyncTestCase
         }
 
         $ref->setValue($cron, $newScheduler);
+    }
+
+    private static function getClock(string $setTo): ClockInterface
+    {
+        $clock = FrozenClock::fromUTC();
+        $clock->setTo(new \DateTimeImmutable($setTo));
+
+        return $clock;
     }
 }
