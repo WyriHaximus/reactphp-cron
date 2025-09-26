@@ -4,15 +4,10 @@ declare(strict_types=1);
 
 namespace WyriHaximus\React\Cron;
 
+use DateTimeImmutable;
+use Psr\Clock\ClockInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\TimerInterface;
-
-use function date;
-use function microtime;
-
-use const WyriHaximus\Constants\Boolean\TRUE_;
-use const WyriHaximus\Constants\Numeric\ONE;
-use const WyriHaximus\Constants\Numeric\ZERO;
 
 final class Scheduler
 {
@@ -29,8 +24,9 @@ final class Scheduler
     private TimerInterface|null $timer = null;
     private bool $active               = self::ACTIVE;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly ClockInterface $clock,
+    ) {
         $this->align();
     }
 
@@ -40,14 +36,9 @@ final class Scheduler
         $this->ticks[] = $tick;
     }
 
-    private function time(): float
+    private function hasDrifted(DateTimeImmutable $time): bool
     {
-        return microtime(TRUE_);
-    }
-
-    private function hasDrifted(float $time): bool
-    {
-        return (int) date('s', (int) $time) > ZERO;
+        return (int) $time->format('s') > 0;
     }
 
     private function tick(): void
@@ -56,7 +47,7 @@ final class Scheduler
             return;
         }
 
-        $startOfTick = $this->time();
+        $startOfTick = $this->clock->now();
 
         foreach ($this->ticks as $tick) {
             $tick();
@@ -76,9 +67,9 @@ final class Scheduler
             $this->timer = null;
         }
 
-        $currentSecond = (int) date('s', (int) $this->time());
+        $currentSecond = (int) $this->clock->now()->format('s');
 
-        if ($currentSecond >= ONE && $currentSecond <= self::TIER_SLOW) {
+        if ($currentSecond >= 1 && $currentSecond <= self::TIER_SLOW) {
             $this->timer = Loop::addTimer(self::TIER_SLOW - $currentSecond, function (): void {
                 $this->timer = null;
                 $this->align();
@@ -88,7 +79,7 @@ final class Scheduler
         }
 
         if ($currentSecond > self::TIER_SLOW && $currentSecond <= self::TIER_MEDIUM) {
-            $this->timer = Loop::addTimer(ONE, function (): void {
+            $this->timer = Loop::addTimer(1, function (): void {
                 $this->timer = null;
                 $this->align();
             });

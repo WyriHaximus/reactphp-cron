@@ -6,6 +6,8 @@ namespace WyriHaximus\React;
 
 use Evenement\EventEmitterInterface;
 use Evenement\EventEmitterTrait;
+use Lcobucci\Clock\SystemClock;
+use Psr\Clock\ClockInterface;
 use React\EventLoop\Loop;
 use Throwable;
 use WyriHaximus\React\Cron\ActionInterface;
@@ -28,9 +30,9 @@ final class Cron implements EventEmitterInterface
 
     private Scheduler $scheduler;
 
-    private function __construct(private MutexInterface $mutex, ActionInterface ...$actions)
+    private function __construct(private MutexInterface $mutex, ClockInterface $clock, ActionInterface ...$actions)
     {
-        $this->scheduler = new Scheduler();
+        $this->scheduler = new Scheduler($clock);
         $this->actions   = $actions;
 
         foreach ($this->actions as $action) {
@@ -48,12 +50,22 @@ final class Cron implements EventEmitterInterface
 
     public static function create(ActionInterface ...$actions): self
     {
-        return self::createWithMutex(new Memory(), ...$actions);
+        return self::createWithClockAndMutex(new Memory(), SystemClock::fromUTC(), ...$actions);
+    }
+
+    public static function createWithClock(ClockInterface $clock, ActionInterface ...$actions): self
+    {
+        return new self(new Memory(), $clock, ...$actions);
     }
 
     public static function createWithMutex(MutexInterface $mutex, ActionInterface ...$actions): self
     {
-        return new self($mutex, ...$actions);
+        return self::createWithClockAndMutex($mutex, SystemClock::fromUTC(), ...$actions);
+    }
+
+    public static function createWithClockAndMutex(MutexInterface $mutex, ClockInterface $clock, ActionInterface ...$actions): self
+    {
+        return new self($mutex, $clock, ...$actions);
     }
 
     public function stop(): void
