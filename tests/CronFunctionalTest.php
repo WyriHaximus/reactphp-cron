@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace WyriHaximus\Tests\React\Cron;
 
-use Lcobucci\Clock\SystemClock;
+use DateTimeImmutable;
+use DateTimeZone;
+use Lcobucci\Clock\FrozenClock;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Clock\ClockInterface;
@@ -20,55 +22,82 @@ use WyriHaximus\React\Cron\Action;
 use WyriHaximus\React\Cron\Scheduler;
 use WyriHaximus\React\Mutex\Memory;
 
+use function array_shift;
+use function count;
+use function is_callable;
 use function React\Async\await;
 
-#[TimeOut(300)]
+#[TimeOut(69)]
 final class CronFunctionalTest extends AsyncTestCase
 {
     /** @return iterable<string, array<mixed>> */
     public static function provideFactoryMethods(): iterable
     {
-        $clock = SystemClock::fromUTC();
+        $clockTime          = new DateTimeImmutable('1975-05-07T19:00:00Z', new DateTimeZone('UTC'));
+        $oneSecondClockTick = static fn (FrozenClock $clock) => $clock->adjustTime('+1 second');
+        $timingTestSets     = [];
+        $testClockTickets   = [];
+        for ($i = 0; $i < 6; ++$i) {
+            $testClockTickets                        = [$oneSecondClockTick, ...$testClockTickets];
+            $clockTime                               = $clockTime->modify('-1 second');
+            $timingTestSets[$clockTime->format('c')] = $testClockTickets;
+        }
 
-        yield 'default' => [
-            'create',
-            [],
-            $clock,
-            true,
-        ];
+        foreach ($timingTestSets as $setTo => $clockTicks) {
+            yield 'default_' . $setTo => [
+                'create',
+                [],
+                self::getClock($setTo),
+                true,
+                ...$clockTicks,
+            ];
 
-        yield 'default_with_system_clock' => [
-            'createWithClock',
-            [$clock],
-            $clock,
-            false,
-        ];
+            yield 'default_with_system_clock_' . $setTo => (static function (string $setTo, callable ...$clockTicks): array {
+                $clock = self::getClock($setTo);
 
-        yield 'default_with_memory_mutex' => [
-            'createWithMutex',
-            [
-                new Memory(),
-            ],
-            $clock,
-            true,
-        ];
+                return [
+                    'createWithClock',
+                    [$clock],
+                    $clock,
+                    false,
+                    ...$clockTicks,
+                ];
+            })($setTo, ...$clockTicks);
 
-        yield 'default_with_system_clock_and_memory_mutex' => [
-            'createWithClockAndMutex',
-            [
-                new Memory(),
-                $clock,
-            ],
-            $clock,
-            false,
-        ];
+            yield 'default_with_memory_mutex_' . $setTo => [
+                'createWithMutex',
+                [
+                    new Memory(),
+                ],
+                self::getClock($setTo),
+                true,
+                ...$clockTicks,
+            ];
+
+            yield 'default_with_system_clock_and_memory_mutex_' . $setTo => (static function (string $setTo, callable ...$clockTicks): array {
+                $clock = self::getClock($setTo);
+
+                return [
+                    'createWithClockAndMutex',
+                    [
+                        new Memory(),
+                        $clock,
+                    ],
+                    $clock,
+                    false,
+                    ...$clockTicks,
+                ];
+            })($setTo, ...$clockTicks);
+        }
     }
 
     /** @param array<mixed> $args */
     #[Test]
     #[DataProvider('provideFactoryMethods')]
-    public function scheduling(string $factoryMethod, array $args, ClockInterface $clock, bool $overRideClock): void
+    public function scheduling(string $factoryMethod, array $args, FrozenClock $clock, bool $overRideClock, callable ...$clockTicks): void
     {
+        self::handleClockTicks($clock, ...$clockTicks);
+
         $ran      = false;
         $ranTimes = 0;
         $cron     = null;
@@ -103,8 +132,10 @@ final class CronFunctionalTest extends AsyncTestCase
     /** @param array<mixed> $args */
     #[Test]
     #[DataProvider('provideFactoryMethods')]
-    public function mutexLockOnlyAllowsTheSameActionOnce(string $factoryMethod, array $args, ClockInterface $clock, bool $overRideClock): void
+    public function mutexLockOnlyAllowsTheSameActionOnce(string $factoryMethod, array $args, FrozenClock $clock, bool $overRideClock, callable ...$clockTicks): void
     {
+        self::handleClockTicks($clock, ...$clockTicks);
+
         $ran      = false;
         $ranTimes = 0;
         $cron     = null;
@@ -140,8 +171,10 @@ final class CronFunctionalTest extends AsyncTestCase
     /** @param array<mixed> $args */
     #[Test]
     #[DataProvider('provideFactoryMethods')]
-    public function exceptionForwarding(string $factoryMethod, array $args, ClockInterface $clock, bool $overRideClock): void
+    public function exceptionForwarding(string $factoryMethod, array $args, FrozenClock $clock, bool $overRideClock, callable ...$clockTicks): void
     {
+        self::handleClockTicks($clock, ...$clockTicks);
+
         $error    = null;
         $ran      = false;
         $deferred = new Deferred();
@@ -178,8 +211,10 @@ final class CronFunctionalTest extends AsyncTestCase
     /** @param array<mixed> $args */
     #[Test]
     #[DataProvider('provideFactoryMethods')]
-    public function runOnStartUp(string $factoryMethod, array $args, ClockInterface $clock, bool $overRideClock): void
+    public function runOnStartUp(string $factoryMethod, array $args, FrozenClock $clock, bool $overRideClock, callable ...$clockTicks): void
     {
+        self::handleClockTicks($clock, ...$clockTicks);
+
         $ran      = false;
         $ranTimes = 0;
         $cron     = null;
@@ -202,7 +237,7 @@ final class CronFunctionalTest extends AsyncTestCase
         self::assertSame(1, $ranTimes);
     }
 
-    private function overRideClock(Cron $cron, ClockInterface $clock): void
+    private function overRideClock(Cron $cron, FrozenClock $clock): void
     {
         $ref = new ReflectionProperty($cron, 'scheduler');
 
@@ -219,5 +254,30 @@ final class CronFunctionalTest extends AsyncTestCase
         }
 
         $ref->setValue($cron, $newScheduler);
+    }
+
+    private static function getClock(string $setTo): ClockInterface
+    {
+        $clock = FrozenClock::fromUTC();
+        $clock->setTo(new DateTimeImmutable($setTo));
+
+        return $clock;
+    }
+
+    private static function handleClockTicks(FrozenClock $clock, callable ...$clockTicks): void
+    {
+        Loop::futureTick(static function () use ($clock, $clockTicks): void {
+            $clockTick = array_shift($clockTicks);
+
+            if (is_callable($clockTick)) {
+                $clockTick($clock);
+            }
+
+            if (count($clockTicks) <= 0) {
+                return;
+            }
+
+            self::handleClockTicks($clock, ...$clockTicks);
+        });
     }
 }
