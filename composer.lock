@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "11bdda92ddad06855df28e149f08b647",
+    "content-hash": "013d261b453b34d7765b4d29bd9cf369",
     "packages": [
         {
             "name": "dragonmantank/cron-expression",
@@ -4233,16 +4233,16 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.1.28",
+            "version": "2.1.29",
             "source": {
                 "type": "git",
-                "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "578fa296a166605d97b94091f724f1257185d278"
+                "url": "https://github.com/phpstan/phpstan-phar-composer-source.git",
+                "reference": "git"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/578fa296a166605d97b94091f724f1257185d278",
-                "reference": "578fa296a166605d97b94091f724f1257185d278",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/d618573eed4a1b6b75e37b2e0b65ac65c885d88e",
+                "reference": "d618573eed4a1b6b75e37b2e0b65ac65c885d88e",
                 "shasum": ""
             },
             "require": {
@@ -4287,7 +4287,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-09-19T08:58:49+00:00"
+            "time": "2025-09-25T06:58:18+00:00"
         },
         {
             "name": "phpstan/phpstan-deprecation-rules",
@@ -4488,16 +4488,16 @@
         },
         {
             "name": "phpunit/php-code-coverage",
-            "version": "12.3.8",
+            "version": "12.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "99e692c6a84708211f7536ba322bbbaef57ac7fc"
+                "reference": "67e8aed88f93d0e6e1cb7effe1a2dfc2fee6022c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/99e692c6a84708211f7536ba322bbbaef57ac7fc",
-                "reference": "99e692c6a84708211f7536ba322bbbaef57ac7fc",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/67e8aed88f93d0e6e1cb7effe1a2dfc2fee6022c",
+                "reference": "67e8aed88f93d0e6e1cb7effe1a2dfc2fee6022c",
                 "shasum": ""
             },
             "require": {
@@ -4524,7 +4524,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "12.3.x-dev"
+                    "dev-main": "12.4.x-dev"
                 }
             },
             "autoload": {
@@ -4553,7 +4553,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/php-code-coverage/issues",
                 "security": "https://github.com/sebastianbergmann/php-code-coverage/security/policy",
-                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/12.3.8"
+                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/12.4.0"
             },
             "funding": [
                 {
@@ -4573,7 +4573,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-09-17T11:31:43+00:00"
+            "time": "2025-09-24T13:44:41+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -4822,16 +4822,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "12.3.14",
+            "version": "12.3.15",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "13e9b2bea9327b094176147250d2c10319a10f5b"
+                "reference": "b035ee2cd8ecad4091885b61017ebb1d80eb0e57"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/13e9b2bea9327b094176147250d2c10319a10f5b",
-                "reference": "13e9b2bea9327b094176147250d2c10319a10f5b",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/b035ee2cd8ecad4091885b61017ebb1d80eb0e57",
+                "reference": "b035ee2cd8ecad4091885b61017ebb1d80eb0e57",
                 "shasum": ""
             },
             "require": {
@@ -4845,7 +4845,7 @@
                 "phar-io/manifest": "^2.0.4",
                 "phar-io/version": "^3.2.1",
                 "php": ">=8.3",
-                "phpunit/php-code-coverage": "^12.3.8",
+                "phpunit/php-code-coverage": "^12.4.0",
                 "phpunit/php-file-iterator": "^6.0.0",
                 "phpunit/php-invoker": "^6.0.0",
                 "phpunit/php-text-template": "^5.0.0",
@@ -4899,7 +4899,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/12.3.14"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/12.3.15"
             },
             "funding": [
                 {
@@ -4923,7 +4923,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-09-24T06:34:27+00:00"
+            "time": "2025-09-28T12:10:54+00:00"
         },
         {
             "name": "psr/container",
@@ -9145,27 +9145,27 @@
         },
         {
             "name": "wyrihaximus/async-test-utilities",
-            "version": "10.1.0",
+            "version": "10.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/WyriHaximus/php-async-test-utilities.git",
-                "reference": "119126834b96966ad90a264da503f9f1bad4dba5"
+                "reference": "69b01179ee1383b753c2df959f3f9b6c402266c8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/php-async-test-utilities/zipball/119126834b96966ad90a264da503f9f1bad4dba5",
-                "reference": "119126834b96966ad90a264da503f9f1bad4dba5",
+                "url": "https://api.github.com/repos/WyriHaximus/php-async-test-utilities/zipball/69b01179ee1383b753c2df959f3f9b6c402266c8",
+                "reference": "69b01179ee1383b753c2df959f3f9b6c402266c8",
                 "shasum": ""
             },
             "require": {
                 "php": "^8.4",
-                "phpunit/phpunit": "^12.3.10",
+                "phpunit/phpunit": "^12.3.15",
                 "react/async": "^4.3.0",
                 "react/event-loop": "^1.5.0",
                 "react/promise": "^3.3.0",
                 "wyrihaximus/phpstan-react": "^2.0.0",
                 "wyrihaximus/react-phpunit-run-tests-in-fiber": "^3.0.0",
-                "wyrihaximus/test-utilities": "^8.2.0"
+                "wyrihaximus/test-utilities": "^8.3.0"
             },
             "conflict": {
                 "composer/compoer": "<2.6.0"
@@ -9200,7 +9200,7 @@
             "description": "Test utilities for api-clients packages",
             "support": {
                 "issues": "https://github.com/WyriHaximus/php-async-test-utilities/issues",
-                "source": "https://github.com/WyriHaximus/php-async-test-utilities/tree/10.1.0"
+                "source": "https://github.com/WyriHaximus/php-async-test-utilities/tree/10.2.0"
             },
             "funding": [
                 {
@@ -9208,7 +9208,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-09-13T20:07:03+00:00"
+            "time": "2025-09-29T23:58:20+00:00"
         },
         {
             "name": "wyrihaximus/coding-standard",
@@ -9477,16 +9477,16 @@
         },
         {
             "name": "wyrihaximus/test-utilities",
-            "version": "8.2.0",
+            "version": "8.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/WyriHaximus/php-test-utilities.git",
-                "reference": "2b2a15394fb4abf878a5f82a6b7fdc29bc002e61"
+                "reference": "5d4e5af5580e0bc24f36e3477bf336652f1fcd17"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/WyriHaximus/php-test-utilities/zipball/2b2a15394fb4abf878a5f82a6b7fdc29bc002e61",
-                "reference": "2b2a15394fb4abf878a5f82a6b7fdc29bc002e61",
+                "url": "https://api.github.com/repos/WyriHaximus/php-test-utilities/zipball/5d4e5af5580e0bc24f36e3477bf336652f1fcd17",
+                "reference": "5d4e5af5580e0bc24f36e3477bf336652f1fcd17",
                 "shasum": ""
             },
             "require": {
@@ -9495,15 +9495,15 @@
                 "ergebnis/phpunit-slow-test-detector": "^2.20.0",
                 "ext-hash": "^8.4",
                 "ext-json": "^8.4",
-                "icanhazstring/composer-unused": "^0.9.4",
+                "icanhazstring/composer-unused": "^0.9.5",
                 "infection/infection": "^0.31.2",
                 "maglnet/composer-require-checker": "^4.16.1",
                 "mockery/mockery": "^1.6.12",
                 "php": "^8.4",
                 "php-parallel-lint/php-console-highlighter": "^1.0",
                 "php-parallel-lint/php-parallel-lint": "^1.4.0",
-                "phpstan/phpstan": "^2.1.25",
-                "phpunit/phpunit": "^12.3.10",
+                "phpstan/phpstan": "^2.1.29",
+                "phpunit/phpunit": "^12.3.15",
                 "rector/rector": "^2.1.7",
                 "roave/backward-compatibility-check": "^8.14.0",
                 "squizlabs/php_codesniffer": "^3.13.4",
@@ -9548,7 +9548,7 @@
             "description": "🛠️ Test utilities for api-clients packages",
             "support": {
                 "issues": "https://github.com/WyriHaximus/php-test-utilities/issues",
-                "source": "https://github.com/WyriHaximus/php-test-utilities/tree/8.2.0"
+                "source": "https://github.com/WyriHaximus/php-test-utilities/tree/8.3.0"
             },
             "funding": [
                 {
@@ -9556,7 +9556,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-09-12T16:27:50+00:00"
+            "time": "2025-09-29T14:03:33+00:00"
         },
         {
             "name": "yamadashy/phpstan-friendly-formatter",
