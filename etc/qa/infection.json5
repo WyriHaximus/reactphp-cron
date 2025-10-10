@@ -9,7 +9,8 @@
         "text": "../../var/infection.log",
         "summary": "../../var/infection-summary.log",
         "json": "../../var/infection.json",
-        "perMutator": "../../var/infection-per-mutator.md"
+        "perMutator": "../../var/infection-per-mutator.md",
+        "github": true
     },
     "mutators": {
         "@default": true,
