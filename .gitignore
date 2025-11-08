@@ -1,3 +1,5 @@
 var/
 vendor/
 etc/qa/.phpunit.result.cache
+var/*
+!var/.gitkeep
