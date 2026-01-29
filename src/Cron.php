@@ -20,7 +20,10 @@ use WyriHaximus\React\Mutex\Memory;
 use function React\Async\async;
 use function React\Async\await;
 
-/** @event error On caught Throws from action handling */
+/**
+ * @event error On caught Throws from action handling
+ * @api
+ */
 final class Cron implements EventEmitterInterface
 {
     use EventEmitterTrait;

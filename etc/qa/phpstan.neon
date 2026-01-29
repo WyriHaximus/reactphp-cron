@@ -4,7 +4,3 @@ parameters:
 		- ../../etc
 		- ../../src
 		- ../../tests
-	ignoreErrors:
-		-
-			identifier: shipmonk.checkedExceptionInCallable
-			path: ../../tests/CronFunctionalTest.php
