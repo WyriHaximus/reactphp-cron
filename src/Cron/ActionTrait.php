@@ -13,6 +13,7 @@ trait ActionTrait
     /** @var callable */
     private mixed $performer;
 
+    /** @phpstan-ignore shipmonk.deadMethod */
     public function __construct(private string $key, private float $mutexTtl, string $expression, callable $performer)
     {
         $this->expression = new CronExpression($expression);
