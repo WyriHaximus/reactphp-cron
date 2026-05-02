@@ -19,9 +19,13 @@ use WyriHaximus\AsyncTestUtilities\AsyncTestCase;
 use WyriHaximus\AsyncTestUtilities\TimeOut;
 use WyriHaximus\React\Cron;
 use WyriHaximus\React\Cron\Action;
+use WyriHaximus\React\Cron\ActionInterface;
 use WyriHaximus\React\Cron\Scheduler;
+use WyriHaximus\React\Mutex\Contracts\MutexInterface;
 use WyriHaximus\React\Mutex\Memory;
 
+use function array_filter;
+use function array_first;
 use function array_shift;
 use function count;
 use function is_callable;
@@ -91,7 +95,7 @@ final class CronFunctionalTest extends AsyncTestCase
         }
     }
 
-    /** @param array<mixed> $args */
+    /** @param array<ClockInterface|MutexInterface|ActionInterface> $args */
     #[Test]
     #[DataProvider('provideFactoryMethods')]
     public function scheduling(string $factoryMethod, array $args, FrozenClock $clock, bool $overRideClock, callable ...$clockTicks): void
@@ -100,6 +104,7 @@ final class CronFunctionalTest extends AsyncTestCase
 
         $ran      = false;
         $ranTimes = 0;
+        /** @var ?Cron $cron */
         $cron     = null;
         $deferred = new Deferred();
         $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
@@ -110,15 +115,12 @@ final class CronFunctionalTest extends AsyncTestCase
                 return;
             }
 
-            /** @phpstan-ignore-next-line */
-            $cron->stop();
+            $cron?->stop();
             Loop::futureTick(static fn () => $deferred->resolve(null));
         });
 
         $args[] = $action;
-        /** @phpstan-ignore-next-line */
-        $cron = Cron::$factoryMethod(...$args);
-        self::assertInstanceOf(Cron::class, $cron);
+        $cron   = $this->cronFactory($factoryMethod, ...$args);
         if ($overRideClock) {
             $this->overRideClock($cron, $clock);
         }
@@ -129,7 +131,7 @@ final class CronFunctionalTest extends AsyncTestCase
         self::assertSame(2, $ranTimes);
     }
 
-    /** @param array<mixed> $args */
+    /** @param array<ClockInterface|MutexInterface|ActionInterface> $args */
     #[Test]
     #[DataProvider('provideFactoryMethods')]
     public function mutexLockOnlyAllowsTheSameActionOnce(string $factoryMethod, array $args, FrozenClock $clock, bool $overRideClock, callable ...$clockTicks): void
@@ -138,6 +140,7 @@ final class CronFunctionalTest extends AsyncTestCase
 
         $ran      = false;
         $ranTimes = 0;
+        /** @var ?Cron $cron */
         $cron     = null;
         $deferred = new Deferred();
         $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
@@ -148,16 +151,13 @@ final class CronFunctionalTest extends AsyncTestCase
                 return;
             }
 
-            /** @phpstan-ignore-next-line */
-            $cron->stop();
+            $cron?->stop();
             Loop::futureTick(static fn () => $deferred->resolve(null));
         });
 
         $args[] = $action;
         $args[] = $action;
-        /** @phpstan-ignore-next-line */
-        $cron = Cron::$factoryMethod(...$args);
-        self::assertInstanceOf(Cron::class, $cron);
+        $cron   = $this->cronFactory($factoryMethod, ...$args);
         if ($overRideClock) {
             $this->overRideClock($cron, $clock);
         }
@@ -168,31 +168,30 @@ final class CronFunctionalTest extends AsyncTestCase
         self::assertSame(2, $ranTimes);
     }
 
-    /** @param array<mixed> $args */
+    /** @param array<ClockInterface|MutexInterface|ActionInterface> $args */
     #[Test]
     #[DataProvider('provideFactoryMethods')]
     public function exceptionForwarding(string $factoryMethod, array $args, FrozenClock $clock, bool $overRideClock, callable ...$clockTicks): void
     {
         self::handleClockTicks($clock, ...$clockTicks);
 
-        $error    = null;
-        $ran      = false;
+        $error = null;
+        $ran   = false;
+        /** @var ?Cron $cron */
+        $cron     = null;
         $deferred = new Deferred();
         $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$cron, $deferred): never {
             Loop::futureTick(static fn () => $deferred->resolve(null));
 
             $ran = true;
 
-            /** @phpstan-ignore-next-line */
-            $cron->stop();
+            $cron?->stop();
 
             throw new RuntimeException('Action goes boom!');
         });
 
         $args[] = $action;
-        /** @phpstan-ignore-next-line */
-        $cron = Cron::$factoryMethod(...$args);
-        self::assertInstanceOf(Cron::class, $cron);
+        $cron   = $this->cronFactory($factoryMethod, ...$args);
         if ($overRideClock) {
             $this->overRideClock($cron, $clock);
         }
@@ -208,7 +207,7 @@ final class CronFunctionalTest extends AsyncTestCase
         self::assertSame('Action goes boom!', $error->getMessage());
     }
 
-    /** @param array<mixed> $args */
+    /** @param array<ClockInterface|MutexInterface|ActionInterface> $args */
     #[Test]
     #[DataProvider('provideFactoryMethods')]
     public function runOnStartUp(string $factoryMethod, array $args, FrozenClock $clock, bool $overRideClock, callable ...$clockTicks): void
@@ -217,24 +216,40 @@ final class CronFunctionalTest extends AsyncTestCase
 
         $ran      = false;
         $ranTimes = 0;
+        /** @var ?Cron $cron */
         $cron     = null;
         $deferred = new Deferred();
         $action   = new Cron\RunOnStartUpAction('name', 0.1, '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
             $ran = true;
             $ranTimes++;
-            /** @phpstan-ignore-next-line */
-            $cron->stop();
+            $cron?->stop();
             Loop::futureTick(static fn () => $deferred->resolve(null));
         });
 
         $args[] = $action;
-        /** @phpstan-ignore-next-line */
-        $cron = Cron::$factoryMethod(...$args);
-        self::assertInstanceOf(Cron::class, $cron);
+        $cron   = $this->cronFactory($factoryMethod, ...$args);
         await($deferred->promise());
 
         self::assertTrue($ran);
         self::assertSame(1, $ranTimes);
+    }
+
+    private function cronFactory(string $factoryMethod, ClockInterface|MutexInterface|ActionInterface ...$args): Cron
+    {
+        /** @var non-empty-array<ActionInterface> $actions */
+        $actions = array_filter($args, static fn (ClockInterface|MutexInterface|ActionInterface $arg): bool => $arg instanceof ActionInterface);
+        /** @var non-empty-array<ClockInterface> $clocks */
+        $clocks = array_filter($args, static fn (ClockInterface|MutexInterface|ActionInterface $arg): bool => $arg instanceof ClockInterface);
+        /** @var non-empty-array<MutexInterface> $mutexs */
+        $mutexs = array_filter($args, static fn (ClockInterface|MutexInterface|ActionInterface $arg): bool => $arg instanceof MutexInterface);
+
+        return match ($factoryMethod) {
+            'create' => Cron::create(...$actions),
+            'createWithClock' => Cron::createWithClock(array_first($clocks), ...$actions),
+            'createWithMutex' => Cron::createWithMutex(array_first($mutexs), ...$actions),
+            'createWithClockAndMutex' => Cron::createWithClockAndMutex(array_first($mutexs), array_first($clocks), ...$actions),
+            default => throw new RuntimeException('Factory method not implemented: ' . $factoryMethod),
+        };
     }
 
     private function overRideClock(Cron $cron, FrozenClock $clock): void
