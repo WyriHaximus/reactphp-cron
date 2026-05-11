@@ -5,12 +5,11 @@ SHELL=bash
 
 DOCKER_AVAILABLE=$(shell ((command -v docker >/dev/null 2>&1) && echo 0 || echo 1))
 CONTAINER_REGISTRY_REPO="ghcr.io/wyrihaximusnet/php"
-COMPOSER_SHOW_EXTENSION_LIST_PROD=$(shell (((command -v composer >/dev/null 2>&1) && composer show -t --no-plugins 2>/dev/null) || docker run --rm -v "`pwd`:`pwd`" -w `pwd` ${CONTAINER_REGISTRY_REPO}:8.4-nts-alpine-slim-dev composer show -t --no-plugins) | grep -o "\-\-\(ext-\).\+" | sort | uniq | cut -d- -f4- | tr -d '\n' | grep . | sed  '/^$$/d' | xargs | sed -e 's/ /, /g' | tr -cd '[:alnum:],' | sed 's/.$$//')
-COMPOSER_SHOW_EXTENSION_LIST_DEV=$(shell (((command -v composer >/dev/null 2>&1) && composer show -s --no-plugins 2>/dev/null) || docker run --rm -v "`pwd`:`pwd`" -w `pwd` ${CONTAINER_REGISTRY_REPO}:8.4-nts-alpine-slim-dev composer show -s --no-plugins) | grep -o "\(ext-\).\+" | sort | uniq | cut -d- -f2- | cut -d" " -f1 | xargs | sed -e 's/ /, /g' | tr -cd '[:alnum:],')
-COMPOSER_SHOW_EXTENSION_LIST=$(shell echo "${COMPOSER_SHOW_EXTENSION_LIST_PROD},${COMPOSER_SHOW_EXTENSION_LIST_DEV}")
-SLIM_DOCKER_IMAGE=$(shell php -r 'echo count(array_intersect(["gd", "vips"], explode(",", "${COMPOSER_SHOW_EXTENSION_LIST}"))) > 0 ? "" : "-slim";')
-NTS_OR_ZTS_DOCKER_IMAGE=$(shell php -r 'echo count(array_intersect(["parallel"], explode(",", "${COMPOSER_SHOW_EXTENSION_LIST}"))) > 0 ? "zts" : "nts";')
-PHP_VERSION:=$(shell (((command -v docker >/dev/null 2>&1) && docker run --rm -v "`pwd`:`pwd`" ${CONTAINER_REGISTRY_REPO}:8.4-nts-alpine-slim php -r "echo json_decode(file_get_contents('`pwd`/composer.json'), true)['config']['platform']['php'];") || echo "8.3") | php -r "echo str_replace('|', '.', explode('.', implode('|', explode('.', stream_get_contents(STDIN), 2)), 2)[0]);")
+SLIM_DOCKER_IMAGE="-slim"
+NTS_OR_ZTS_DOCKER_IMAGE="nts"
+OTEL_PHP_FIBERS_ENABLED=true
+NEEDS_DOCKER_SOCKET=FALSE
+PHP_VERSION="8.4"
 CONTAINER_NAME=$(shell echo "${CONTAINER_REGISTRY_REPO}:${PHP_VERSION}-${NTS_OR_ZTS_DOCKER_IMAGE}-alpine${SLIM_DOCKER_IMAGE}-dev")
 COMPOSER_CACHE_DIR=$(shell (command -v composer >/dev/null 2>&1) && composer config --global cache-dir -q 2>/dev/null || echo ${HOME}/.composer-php/cache)
 COMPOSER_CONTAINER_CACHE_DIR=$(shell ((command -v docker >/dev/null 2>&1) && docker run --rm -it ${CONTAINER_NAME} composer config --global cache-dir -q) || echo ${HOME}/.composer-php/cache)
@@ -23,16 +22,30 @@ endif
 
 ifeq ("$(IN_DOCKER)","TRUE")
 	DOCKER_RUN:=
+	DOCKER_RUN_WITH_SOCKET:=
+	DOCKER_SHELL:=
 else
     ifeq ($(DOCKER_AVAILABLE),0)
-        DOCKER_RUN:=docker run --rm -it \
-            -v "`pwd`:`pwd`" \
-            -v "${COMPOSER_CACHE_DIR}:${COMPOSER_CONTAINER_CACHE_DIR}" \
-            -w "`pwd`" \
-            -e OTEL_PHP_FIBERS_ENABLED="true" \
-            "${CONTAINER_NAME}"
+        DOCKER_COMMON_OPS:=-v "`pwd`:`pwd`" -w "`pwd`" -v "${COMPOSER_CACHE_DIR}:${COMPOSER_CONTAINER_CACHE_DIR}"  -e OTEL_PHP_FIBERS_ENABLED="${OTEL_PHP_FIBERS_ENABLED}" --ulimit nofile=1000000
+        ifeq ("$(NEEDS_DOCKER_SOCKET)","TRUE")
+            ifneq ("$(wildcard /var/run/docker.sock)","")
+                DOCKER_SOCKET_OPS:=-v "/var/run/docker.sock:/var/run/docker.sock"
+                DOCKER_SOCKET_CONTAINER_NAME_SUFFIX:=-root
+            else
+                DOCKER_SOCKET_OPS:=
+                DOCKER_SOCKET_CONTAINER_NAME_SUFFIX:=
+            endif
+        else
+            DOCKER_SOCKET_OPS:=
+            DOCKER_SOCKET_CONTAINER_NAME_SUFFIX:=
+        endif
+        DOCKER_RUN:=docker run --rm -i ${DOCKER_COMMON_OPS} "${CONTAINER_NAME}"
+        DOCKER_RUN_WITH_SOCKET:=docker run --rm -i ${DOCKER_COMMON_OPS} ${DOCKER_SOCKET_OPS} "${CONTAINER_NAME}${DOCKER_SOCKET_CONTAINER_NAME_SUFFIX}"
+        DOCKER_SHELL:=docker run --rm -it ${DOCKER_COMMON_OPS} "${CONTAINER_NAME}"
     else
         DOCKER_RUN:=
+        DOCKER_RUN_WITH_SOCKET:=
+        DOCKER_SHELL:=
     endif
 endif
 
@@ -44,14 +57,14 @@ endif
 
 ## Run everything extra point
 all: ## Runs everything ####
-	$(DOCKER_RUN) make all-raw
+	$(DOCKER_RUN_WITH_SOCKET) make all-raw
 all-raw: ## The real runs everything, but due to sponge it has to be ran inside DOCKER_RUN ##U##
 	$(MAKE) syntax-php rector-upgrade cs-fix cs stan unit-testing mutation-testing composer-require-checker composer-unused backward-compatibility-check ## Count: 10
 
 
 ## Temporary set of migrations to get all my repos in shape
 migrations-git-enforce-gitattributes-contents: #### Enforce .gitattributes contents ##*I*##
-	($(DOCKER_RUN) php -r 'file_put_contents(".gitattributes", base64_decode("IyBTZXQgdGhlIGRlZmF1bHQgYmVoYXZpb3IsIGluIGNhc2UgcGVvcGxlIGRvbid0IGhhdmUgY29yZS5hdXRvY3JsZiBzZXQuCiogdGV4dCBlb2w9bGYKCiMgVGhlc2UgZmlsZXMgYXJlIGJpbmFyeSBhbmQgc2hvdWxkIGJlIGxlZnQgdW50b3VjaGVkCiMgKGJpbmFyeSBpcyBhIG1hY3JvIGZvciAtdGV4dCAtZGlmZikKKi5wbmcgYmluYXJ5CiouanBnIGJpbmFyeQoqLmpwZWcgYmluYXJ5CiouZ2lmIGJpbmFyeQoqLmljbyBiaW5hcnkKKi53ZWJwIGJpbmFyeQoqLmJtcCBiaW5hcnkKKi50dGYgYmluYXJ5CgojIElnbm9yaW5nIGZpbGVzIGZvciBkaXN0cmlidXRpb24gYXJjaGlldmVzCi5naXRodWIvIGV4cG9ydC1pZ25vcmUKZXRjL2NpLyBleHBvcnQtaWdub3JlCmV0Yy9kZXYtYXBwLyBleHBvcnQtaWdub3JlCmV0Yy9xYS8gZXhwb3J0LWlnbm9yZQpleGFtcGxlcy8gZXhwb3J0LWlnbm9yZQp0ZXN0cy8gZXhwb3J0LWlnbm9yZQp2YXIvIGV4cG9ydC1pZ25vcmUKLmRldmNvbnRhaW5lci5qc29uIGV4cG9ydC1pZ25vcmUKLmVkaXRvcmNvbmZpZyBleHBvcnQtaWdub3JlCi5naXRhdHRyaWJ1dGVzIGV4cG9ydC1pZ25vcmUKLmdpdGlnbm9yZSBleHBvcnQtaWdub3JlCkNPTlRSSUJVVElORy5tZCBleHBvcnQtaWdub3JlCmNvbXBvc2VyLmxvY2sgZXhwb3J0LWlnbm9yZQpNYWtlZmlsZSBleHBvcnQtaWdub3JlClJFQURNRS5tZCBleHBvcnQtaWdub3JlCgojIERpZmZpbmcKKi5waHAgZGlmZj1waHAK"));' || true)
+	($(DOCKER_RUN) php -r 'file_put_contents(".gitattributes", base64_decode("IyBTZXQgdGhlIGRlZmF1bHQgYmVoYXZpb3IsIGluIGNhc2UgcGVvcGxlIGRvbid0IGhhdmUgY29yZS5hdXRvY3JsZiBzZXQuCiogdGV4dCBlb2w9bGYKCiMgVGhlc2UgZmlsZXMgYXJlIGJpbmFyeSBhbmQgc2hvdWxkIGJlIGxlZnQgdW50b3VjaGVkCiMgKGJpbmFyeSBpcyBhIG1hY3JvIGZvciAtdGV4dCAtZGlmZikKKi5wbmcgYmluYXJ5CiouanBnIGJpbmFyeQoqLmpwZWcgYmluYXJ5CiouZ2lmIGJpbmFyeQoqLmljbyBiaW5hcnkKKi53ZWJwIGJpbmFyeQoqLmJtcCBiaW5hcnkKKi50dGYgYmluYXJ5CiouYmxwIGJpbmFyeQoqLmRiMiBiaW5hcnkKCiMgSWdub3JpbmcgZmlsZXMgZm9yIGRpc3RyaWJ1dGlvbiBhcmNoaWV2ZXMKLmdpdGh1Yi8gZXhwb3J0LWlnbm9yZQpldGMvY2kvIGV4cG9ydC1pZ25vcmUKZXRjL2Rldi1hcHAvIGV4cG9ydC1pZ25vcmUKZXRjL3FhLyBleHBvcnQtaWdub3JlCmV4YW1wbGVzLyBleHBvcnQtaWdub3JlCnRlc3RzLyBleHBvcnQtaWdub3JlCnZhci8gZXhwb3J0LWlnbm9yZQouZGV2Y29udGFpbmVyLmpzb24gZXhwb3J0LWlnbm9yZQouZWRpdG9yY29uZmlnIGV4cG9ydC1pZ25vcmUKLmdpdGF0dHJpYnV0ZXMgZXhwb3J0LWlnbm9yZQouZ2l0aWdub3JlIGV4cG9ydC1pZ25vcmUKQ09OVFJJQlVUSU5HLm1kIGV4cG9ydC1pZ25vcmUKY29tcG9zZXIubG9jayBleHBvcnQtaWdub3JlCk1ha2VmaWxlIGV4cG9ydC1pZ25vcmUKUkVBRE1FLm1kIGV4cG9ydC1pZ25vcmUKCiMgRGlmZmluZwoqLnBocCBkaWZmPXBocAo="));' || true)
 
 migrations-git-make-sure-gitignore-exists: #### Make sure .gitignore exists ##*I*##
 	($(DOCKER_RUN) touch .gitignore || true)
@@ -119,11 +132,17 @@ migrations-php-infection-ensure-log-per-mutator-has-the-correct-path: #### Ensur
 migrations-php-add-github-true-to-for-infection: #### Ensure we configure infection to emit logs to GitHub in etc/qa/infection.json5 ##*I*##
 	($(DOCKER_RUN) php -r '$$infectionFile = "etc/qa/infection.json5"; if (!file_exists($$infectionFile)) {exit;} $$json = json_decode(file_get_contents($$infectionFile), true); if (!is_array($$json)) {exit;}  if (!array_key_exists("logs", $$json)) {exit;} if (array_key_exists("github", $$json["logs"])) {exit;} $$json["logs"]["github"] = true; file_put_contents($$infectionFile, json_encode($$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\r\n");' || true)
 
+migrations-php-make-paths-compatible-with-infection-0-32: #### We update path to be relative to etc/qa/infection.json5 as of 0.32 ##*I*##
+	($(DOCKER_RUN) php -r '$$infectionFile = "etc/qa/infection.json5"; if (!file_exists($$infectionFile)) {exit;} $$json = json_decode(file_get_contents($$infectionFile), true); if (!is_array($$json)) {exit;}  if (!array_key_exists("source", $$json)) {exit;} if (!array_key_exists("directories", $$json["source"])) {exit;} foreach ($$json["source"]["directories"] as $$key => $$value) { if (!str_starts_with($$value, "../../")) {$$json["source"]["directories"][$$key] = "../../" . $$value;} } file_put_contents($$infectionFile, json_encode($$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\r\n");' || true)
+
 migrations-php-set-phpunit-ensure-config-file-exists: #### Make sure we have a PHPUnit config file at etc/qa/phpunit.xml ##*I*##
-	($(DOCKER_RUN) php -r '$$phpUnitConfigFIle = "etc/qa/phpunit.xml"; if (file_exists($$phpUnitConfigFIle)) {exit;} file_put_contents($$phpUnitConfigFIle, base64_decode("PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBocHVuaXQgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgYm9vdHN0cmFwPSIuLi8uLi92ZW5kb3IvYXV0b2xvYWQucGhwIiBjb2xvcnM9InRydWUiIHhzaTpub05hbWVzcGFjZVNjaGVtYUxvY2F0aW9uPSIuLi8uLi92ZW5kb3IvcGhwdW5pdC9waHB1bml0L3BocHVuaXQueHNkIiBjYWNoZURpcmVjdG9yeT0iLi4vLi4vdmFyL3BocHVuaXQvY2FjaGUiPgogICAgPHRlc3RzdWl0ZXM+CiAgICAgICAgPHRlc3RzdWl0ZSBuYW1lPSJUZXN0IFN1aXRlIj4KICAgICAgICAgICAgPGRpcmVjdG9yeT4uLi8uLi90ZXN0cy88L2RpcmVjdG9yeT4KICAgICAgICA8L3Rlc3RzdWl0ZT4KICAgIDwvdGVzdHN1aXRlcz4KICAgIDxzb3VyY2U+CiAgICAgICAgPGluY2x1ZGU+CiAgICAgICAgICAgIDxkaXJlY3Rvcnkgc3VmZml4PSIucGhwIj4uLi8uLi9zcmMvPC9kaXJlY3Rvcnk+CiAgICAgICAgPC9pbmNsdWRlPgogICAgPC9zb3VyY2U+CiAgICA8ZXh0ZW5zaW9ucz4KICAgICAgICA8Ym9vdHN0cmFwIGNsYXNzPSJFcmdlYm5pc1xQSFBVbml0XFNsb3dUZXN0RGV0ZWN0b3JcRXh0ZW5zaW9uIi8+CiAgICA8L2V4dGVuc2lvbnM+CjwvcGhwdW5pdD4K"));' || true)
+	($(DOCKER_RUN) php -r '$$phpUnitConfigFIle = "etc/qa/phpunit.xml"; if (file_exists($$phpUnitConfigFIle)) {exit;} file_put_contents($$phpUnitConfigFIle, base64_decode("PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHBocHVuaXQKICAgIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiCiAgICBib290c3RyYXA9Ii4uLy4uL3ZlbmRvci9hdXRvbG9hZC5waHAiCiAgICBjb2xvcnM9InRydWUiCiAgICB4c2k6bm9OYW1lc3BhY2VTY2hlbWFMb2NhdGlvbj0iLi4vLi4vdmVuZG9yL3BocHVuaXQvcGhwdW5pdC9waHB1bml0LnhzZCIKICAgIGNhY2hlRGlyZWN0b3J5PSIuLi8uLi92YXIvcGhwdW5pdC9jYWNoZSIKICAgIGRpc3BsYXlEZXRhaWxzT25UZXN0c1RoYXRUcmlnZ2VyRGVwcmVjYXRpb25zPSJ0cnVlIgogICAgZGlzcGxheURldGFpbHNPblRlc3RzVGhhdFRyaWdnZXJFcnJvcnM9InRydWUiCiAgICBkaXNwbGF5RGV0YWlsc09uVGVzdHNUaGF0VHJpZ2dlck5vdGljZXM9InRydWUiCiAgICBkaXNwbGF5RGV0YWlsc09uVGVzdHNUaGF0VHJpZ2dlcldhcm5pbmdzPSJ0cnVlIgogICAgZGlzcGxheURldGFpbHNPblBocHVuaXREZXByZWNhdGlvbnM9InRydWUiCj4KICAgIDx0ZXN0c3VpdGVzPgogICAgICAgIDx0ZXN0c3VpdGUgbmFtZT0iVGVzdCBTdWl0ZSI+CiAgICAgICAgICAgIDxkaXJlY3Rvcnk+Li4vLi4vdGVzdHMvPC9kaXJlY3Rvcnk+CiAgICAgICAgPC90ZXN0c3VpdGU+CiAgICA8L3Rlc3RzdWl0ZXM+CiAgICA8c291cmNlPgogICAgICAgIDxpbmNsdWRlPgogICAgICAgICAgICA8ZGlyZWN0b3J5IHN1ZmZpeD0iLnBocCI+Li4vLi4vc3JjLzwvZGlyZWN0b3J5PgogICAgICAgIDwvaW5jbHVkZT4KICAgIDwvc291cmNlPgogICAgPGV4dGVuc2lvbnM+CiAgICAgICAgPGJvb3RzdHJhcCBjbGFzcz0iRXJnZWJuaXNcUEhQVW5pdFxTbG93VGVzdERldGVjdG9yXEV4dGVuc2lvbiIvPgogICAgPC9leHRlbnNpb25zPgo8L3BocHVuaXQ+Cg=="));' || true)
 
 migrations-php-set-phpunit-xsd-path-to-local: #### Ensure that the PHPUnit XDS referred in etc/qa/phpunit.xml points to vendor/phpunit/phpunit/phpunit.xsd so we don't go over the network ##*I*##
 	($(DOCKER_RUN) php -r '$$phpUnitConfigFIle = "etc/qa/phpunit.xml"; if (!file_exists($$phpUnitConfigFIle)) {exit;} $$xml = file_get_contents($$phpUnitConfigFIle); if (!is_string($$xml)) {exit;} for ($$major = 0; $$major < 23; $$major++) { for ($$minor = 0; $$minor < 23; $$minor++) { $$xml = str_replace("https://schema.phpunit.de/" . $$major . "." . $$minor . "/phpunit.xsd", "../../vendor/phpunit/phpunit/phpunit.xsd", $$xml); } } file_put_contents($$phpUnitConfigFIle, $$xml);' || true)
+
+migrations-php-set-phpunit-make-sure-we-see-all-the-warnings-deprecations-etc-etc-that-will-make-phpunit-do-a-non-happy-exit: #### Make sure we see all the warnings, deprecations, etc etc that will make PHPunit do a non-happy exit ##*I*##
+	($(DOCKER_RUN) php -r '$$phpUnitConfigFIle = "etc/qa/phpunit.xml"; if (!file_exists($$phpUnitConfigFIle)) {exit;} $$xml = file_get_contents($$phpUnitConfigFIle); if (!is_string($$xml)) {exit;} $$xml = str_replace(base64_decode("PHBocHVuaXQgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgYm9vdHN0cmFwPSIuLi8uLi92ZW5kb3IvYXV0b2xvYWQucGhwIiBjb2xvcnM9InRydWUiIHhzaTpub05hbWVzcGFjZVNjaGVtYUxvY2F0aW9uPSIuLi8uLi92ZW5kb3IvcGhwdW5pdC9waHB1bml0L3BocHVuaXQueHNkIiBjYWNoZURpcmVjdG9yeT0iLi4vLi4vdmFyL3BocHVuaXQvY2FjaGUiPg=="), base64_decode("PHBocHVuaXQKICAgIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiCiAgICBib290c3RyYXA9Ii4uLy4uL3ZlbmRvci9hdXRvbG9hZC5waHAiCiAgICBjb2xvcnM9InRydWUiCiAgICB4c2k6bm9OYW1lc3BhY2VTY2hlbWFMb2NhdGlvbj0iLi4vLi4vdmVuZG9yL3BocHVuaXQvcGhwdW5pdC9waHB1bml0LnhzZCIKICAgIGNhY2hlRGlyZWN0b3J5PSIuLi8uLi92YXIvcGhwdW5pdC9jYWNoZSIKICAgIGRpc3BsYXlEZXRhaWxzT25UZXN0c1RoYXRUcmlnZ2VyRGVwcmVjYXRpb25zPSJ0cnVlIgogICAgZGlzcGxheURldGFpbHNPblRlc3RzVGhhdFRyaWdnZXJFcnJvcnM9InRydWUiCiAgICBkaXNwbGF5RGV0YWlsc09uVGVzdHNUaGF0VHJpZ2dlck5vdGljZXM9InRydWUiCiAgICBkaXNwbGF5RGV0YWlsc09uVGVzdHNUaGF0VHJpZ2dlcldhcm5pbmdzPSJ0cnVlIgogICAgZGlzcGxheURldGFpbHNPblBocHVuaXREZXByZWNhdGlvbnM9InRydWUiCj4="), $$xml); file_put_contents($$phpUnitConfigFIle, $$xml);' || true)
 
 migrations-php-move-phpstan: #### Move phpstan.neon to etc/qa/phpstan.neon ##*I*##
 	($(DOCKER_RUN) mv phpstan.neon etc/qa/phpstan.neon || true)
@@ -203,11 +222,26 @@ migrations-php-phpcs-make-sure-tests-has-no-trailing-slash: #### Make sure PHPCS
 migrations-php-phpcs-make-sure-etc-is-ran-through: #### Make sure PHPCS runs through etc ##*I*##
 	($(DOCKER_RUN) php -r '$$phpcsConfigFile = "etc/qa/phpcs.xml"; if (!file_exists($$phpcsConfigFile)) {exit;} $$xml = file_get_contents($$phpcsConfigFile); if (!is_string($$xml)) {exit;} if (strpos($$xml, "<file>../../etc</file>") !== false) {exit;} $$xml = str_replace("<file>../../src</file>", "<file>../../etc</file>\n    <file>../../src</file>", $$xml); file_put_contents($$phpcsConfigFile, $$xml);' || true)
 
+migrations-phpcs-include-examples-directory-when-present: #### Make sure PHPCS runs through examples when it exists ##*I*##
+	($(DOCKER_RUN) php -r 'if (!file_exists("examples/")) {exit;} $$phpcsConfigFile = "etc/qa/phpcs.xml"; if (!file_exists($$phpcsConfigFile)) {exit;} $$xml = file_get_contents($$phpcsConfigFile); if (!is_string($$xml)) {exit;} if (strpos($$xml, "<file>../../examples</file>") !== false) {exit;} $$xml = str_replace("<file>../../etc</file>", "<file>../../etc</file>\n    <file>../../examples</file>", $$xml); file_put_contents($$phpcsConfigFile, $$xml);' || true)
+
 migrations-php-move-composer-require-checker: #### Move composer-require-checker.json to etc/qa/composer-require-checker.json ##*I*##
 	($(DOCKER_RUN) mv composer-require-checker.json etc/qa/composer-require-checker.json || true)
 
 migrations-php-composer-require-checker-create-config-if-not-exists: #### Create Composer Require Checker config file if it doesn't exists at etc/qa/composer-require-checker.json ##*I*##
 	($(DOCKER_RUN) php -r '$$composerRequireCheckerConfigFile = "etc/qa/composer-require-checker.json"; $$composerRequireCheckerConfig = base64_decode("ewogICJzeW1ib2wtd2hpdGVsaXN0IiA6IFsKICAgICJudWxsIiwgInRydWUiLCAiZmFsc2UiLAogICAgInN0YXRpYyIsICJzZWxmIiwgInBhcmVudCIsCiAgICAiYXJyYXkiLCAic3RyaW5nIiwgImludCIsICJmbG9hdCIsICJib29sIiwgIml0ZXJhYmxlIiwgImNhbGxhYmxlIiwgInZvaWQiLCAib2JqZWN0IgogIF0sCiAgInBocC1jb3JlLWV4dGVuc2lvbnMiIDogWwogICAgIkNvcmUiLAogICAgImRhdGUiLAogICAgInBjcmUiLAogICAgIlBoYXIiLAogICAgIlJlZmxlY3Rpb24iLAogICAgIlNQTCIsCiAgICAic3RhbmRhcmQiCiAgXSwKICAic2Nhbi1maWxlcyIgOiBbXQp9Cg=="); if (file_exists($$composerRequireCheckerConfigFile)) {exit;} file_put_contents($$composerRequireCheckerConfigFile, $$composerRequireCheckerConfig);' || true)
+
+migrations-inline-code-phpstan-remove-line-phpstan-ignore-next-line: #### Remove all lines that contains @phpstan-ignore-next-line ##*I*##
+	($(DOCKER_RUN) php -r '$$possibleDirectories = ["src", "tests", "etc", "examples"]; foreach ($$possibleDirectories as $$possibleDirectory) { if (!file_exists($$possibleDirectory)) {continue;} $$i = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($$possibleDirectory)); $$i->rewind(); while ($$i->valid()) { if (!is_file($$i->key()) || (is_file($$i->key()) && !str_ends_with($$i->key(), ".php"))) { $$i->next(); continue; } $$fileContents = explode("\n", file_get_contents($$i->key())); foreach ($$fileContents as $$lineNumber => $$lineContent) { if (str_contains($$lineContent, "@phpstan-ignore-next-line")) { unset($$fileContents[$$lineNumber]); } } file_put_contents($$i->key(), implode("\n", $$fileContents)); $$i->next(); } }' || true)
+
+migrations-inline-code-phpstan-remove-rest-of-line-phpstan-ignore-line: #### Remove rest of line for all lines that contain @phpstan-ignore-line ##*I*##
+	($(DOCKER_RUN) php -r '$$possibleDirectories = ["src", "tests", "etc", "examples"]; foreach ($$possibleDirectories as $$possibleDirectory) { if (!file_exists($$possibleDirectory)) {continue;} $$i = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($$possibleDirectory)); $$i->rewind(); while ($$i->valid()) { if (!is_file($$i->key()) || (is_file($$i->key()) && !str_ends_with($$i->key(), ".php"))) { $$i->next(); continue; } $$fileContents = explode("\n", file_get_contents($$i->key())); foreach ($$fileContents as $$lineNumber => $$lineContent) { if (str_contains($$lineContent, "/** @phpstan-ignore-line")) { [$$fileContents[$$lineNumber]] = explode("/** @phpstan-ignore-line", $$lineContent); } } file_put_contents($$i->key(), implode("\n", $$fileContents)); $$i->next(); } }' || true)
+
+migrations-inline-code-psalm-remove-line-psalm-suppress: #### Remove all lines that contain @psalm-suppress ##*I*##
+	($(DOCKER_RUN) php -r '$$possibleDirectories = ["src", "tests", "etc", "examples"]; foreach ($$possibleDirectories as $$possibleDirectory) { if (!file_exists($$possibleDirectory)) {continue;} $$i = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($$possibleDirectory)); $$i->rewind(); while ($$i->valid()) { if (!is_file($$i->key()) || (is_file($$i->key()) && !str_ends_with($$i->key(), ".php"))) { $$i->next(); continue; } $$fileContents = explode("\n", file_get_contents($$i->key())); foreach ($$fileContents as $$lineNumber => $$lineContent) { if (str_contains($$lineContent, "@psalm-suppress")) { unset($$fileContents[$$lineNumber]); } } file_put_contents($$i->key(), implode("\n", $$fileContents)); $$i->next(); } }' || true)
+
+migrations-inline-code-remove-line-internal: #### Remove all lines that contain @internal ##*I*##
+	($(DOCKER_RUN) php -r '$$possibleDirectories = ["src", "tests", "etc", "examples"]; foreach ($$possibleDirectories as $$possibleDirectory) { if (!file_exists($$possibleDirectory)) {continue;} $$i = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($$possibleDirectory)); $$i->rewind(); while ($$i->valid()) { if (!is_file($$i->key()) || (is_file($$i->key()) && !str_ends_with($$i->key(), ".php"))) { $$i->next(); continue; } $$fileContents = explode("\n", file_get_contents($$i->key())); foreach ($$fileContents as $$lineNumber => $$lineContent) { if (str_contains($$lineContent, "@internal")) { unset($$fileContents[$$lineNumber]); } } file_put_contents($$i->key(), implode("\n", $$fileContents)); $$i->next(); } }' || true)
 
 migrations-php-make-sure-github-exists: #### Make sure .github/ exists ##*I*##
 	($(DOCKER_RUN) mkdir .github || true)
@@ -261,66 +295,87 @@ migrations-renovate-create-config-if-not-exists: #### Create Renovate Config if 
 migrations-renovate-point-at-correct-config: #### Ensure .github/renovate.json points at github>WyriHaximus/renovate-config:php-package instead of local>WyriHaximus/renovate-config ##*I*##
 	($(DOCKER_RUN) php -r '$$renovateFIle = ".github/renovate.json"; if (!file_exists($$renovateFIle)) {exit;} file_put_contents($$renovateFIle, str_replace("local>WyriHaximus/renovate-config", "github>WyriHaximus/renovate-config:php-package", file_get_contents($$renovateFIle)));' || true)
 
+migration-renovate-set-php-constraint: #### Always keep renovate's constraints.php in sync with composer.json's config.platform.php ##*I*##
+	($(DOCKER_RUN) php -r '$$composerFIle = "composer.json"; if (!file_exists($$composerFIle)) {exit;} $$json = json_decode(file_get_contents($$composerFIle), true); if (!array_key_exists("config", $$json)) {exit;} if (!array_key_exists("platform", $$json["config"])) {exit;} if (!array_key_exists("php", $$json["config"]["platform"])) {exit;} $$phpVersionConstraint = str_replace(".13", ".x", $$json["config"]["platform"]["php"]); $$renovateFIle = ".github/renovate.json"; if (!file_exists($$renovateFIle)) {exit;} $$json = json_decode(file_get_contents($$renovateFIle), true); if (!is_array($$json)) {exit;}  if (!array_key_exists("constraints", $$json)) {$$json["constraints"] = [];} $$json["constraints"]["php"] = $$phpVersionConstraint; file_put_contents($$renovateFIle, json_encode($$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\r\n");' || true)
+
+migration-renovate-set-composer-constraint: #### Always keep renovate's constraints.composer at 2.x ##*I*##
+	($(DOCKER_RUN) php -r '$$renovateFIle = ".github/renovate.json"; if (!file_exists($$renovateFIle)) {exit;} $$json = json_decode(file_get_contents($$renovateFIle), true); if (!is_array($$json)) {exit;}  if (!array_key_exists("constraints", $$json)) {$$json["constraints"] = [];} $$json["constraints"]["composer"] = "2.x"; file_put_contents($$renovateFIle, json_encode($$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\r\n");' || true)
+
 
 ## Our default jobs
 
 on-install-or-update: ## Tasks, like migrations, that specifically have be run after composer install or update. These will also run by self hosted Renovate ####
-	$(MAKE) migrations-git-enforce-gitattributes-contents migrations-git-make-sure-gitignore-exists migrations-git-make-sure-gitignore-ignores-var migrations-git-make-sure-gitignore-excludes-var-gitkeep migrations-php-make-sure-var-exists migrations-php-make-sure-var-gitkeep-exists migrations-php-make-sure-etc-exists migrations-php-make-sure-etc-ci-exists migrations-php-make-sure-etc-qa-exists migrations-php-move-psalm-xml-config-to-etc migrations-php-remove-psalm-xml-config migrations-php-remove-old-phpunit-xml-dist-config migrations-php-remove-old-phpunit-xml-config migrations-php-ensure-etc-ci-markdown-link-checker-json-exists migrations-php-move-infection-config-to-etc migrations-php-infection-create-config-if-not-exists migrations-php-remove-phpunit-config-dir-from-infection migrations-php-fix-logs-relative-paths-for-infection migrations-php-infection-ensure-log-text-has-the-correct-path migrations-php-infection-ensure-log-summary-has-the-correct-path migrations-php-infection-ensure-log-json-has-the-correct-path migrations-php-infection-ensure-log-per-mutator-has-the-correct-path migrations-php-add-github-true-to-for-infection migrations-php-set-phpunit-ensure-config-file-exists migrations-php-set-phpunit-xsd-path-to-local migrations-php-move-phpstan migrations-php-set-phpstan-ensure-config-file-exists migrations-php-set-phpstan-uncomment-parameters migrations-php-set-phpstan-add-parameters-if-it-isnt-present-in-the-config-file migrations-php-set-phpstan-paths-in-config migrations-php-set-phpstan-level-max-in-config migrations-php-set-phpstan-resolve-ergebnis-noExtends-classesAllowedToBeExtended migrations-php-set-phpstan-drop-checkGenericClassInNonGenericObjectType migrations-php-phpstan-add-prefix-for-anything-that-starts-with-vendor-in-a-list migrations-php-set-phpstan-drop-include-test-utilities-rules migrations-php-set-phpstan-drop-include-async-test-utilities-rules migrations-php-set-rector-create-config-if-not-exists migrations-php-composer-unused-create-config-if-not-exists migrations-php-composer-unused-drop-commented-out-line-scattered-across-my-repos migrations-php-move-phpcs migrations-php-move-phpcs-not-dist migrations-php-set-phpcs-ensure-config-file-exists migrations-php-phpcs-make-basepath-is-correct-relatively migrations-php-phpcs-make-cache-is-correct-relatively migrations-php-phpcs-make-sure-config-has-correct-relative-path-for-etc migrations-php-phpcs-make-sure-etc-has-no-trailing-slash migrations-php-phpcs-make-sure-config-has-correct-relative-path-for-src migrations-php-phpcs-make-sure-src-has-no-trailing-slash migrations-php-phpcs-make-sure-config-has-correct-relative-path-for-tests migrations-php-phpcs-make-sure-tests-has-no-trailing-slash migrations-php-phpcs-make-sure-etc-is-ran-through migrations-php-move-composer-require-checker migrations-php-composer-require-checker-create-config-if-not-exists migrations-php-make-sure-github-exists migrations-github-codeowners migrations-php-make-sure-github-workflows-exists migrations-github-actions-remove-composer-diff migrations-github-actions-remove-markdown-check-links migrations-github-actions-remove-markdown-craft-release migrations-github-actions-remove-set-milestone-on-pr migrations-github-actions-move-ci migrations-github-actions-remove-ci-if-its-old-style-php-ci-workflow migrations-github-actions-create-ci-if-not-exists migrations-github-actions-move-release-management migrations-github-actions-fix-management-in-release-management-referenced-workflow-file migrations-github-actions-create-release-management-if-not-exists migrations-renovate-remove-dependabot-config migrations-renovate-move-config migrations-renovate-create-config-if-not-exists migrations-renovate-point-at-correct-config syntax-php composer-normalize rector-upgrade cs-fix ## Count: 74
+	$(DOCKER_RUN) $(MAKE) migrations-git-enforce-gitattributes-contents migrations-git-make-sure-gitignore-exists migrations-git-make-sure-gitignore-ignores-var migrations-git-make-sure-gitignore-excludes-var-gitkeep migrations-php-make-sure-var-exists migrations-php-make-sure-var-gitkeep-exists migrations-php-make-sure-etc-exists migrations-php-make-sure-etc-ci-exists migrations-php-make-sure-etc-qa-exists migrations-php-move-psalm-xml-config-to-etc migrations-php-remove-psalm-xml-config migrations-php-remove-old-phpunit-xml-dist-config migrations-php-remove-old-phpunit-xml-config migrations-php-ensure-etc-ci-markdown-link-checker-json-exists migrations-php-move-infection-config-to-etc migrations-php-infection-create-config-if-not-exists migrations-php-remove-phpunit-config-dir-from-infection migrations-php-fix-logs-relative-paths-for-infection migrations-php-infection-ensure-log-text-has-the-correct-path migrations-php-infection-ensure-log-summary-has-the-correct-path migrations-php-infection-ensure-log-json-has-the-correct-path migrations-php-infection-ensure-log-per-mutator-has-the-correct-path migrations-php-add-github-true-to-for-infection migrations-php-make-paths-compatible-with-infection-0-32 migrations-php-set-phpunit-ensure-config-file-exists migrations-php-set-phpunit-xsd-path-to-local migrations-php-set-phpunit-make-sure-we-see-all-the-warnings-deprecations-etc-etc-that-will-make-phpunit-do-a-non-happy-exit migrations-php-move-phpstan migrations-php-set-phpstan-ensure-config-file-exists migrations-php-set-phpstan-uncomment-parameters migrations-php-set-phpstan-add-parameters-if-it-isnt-present-in-the-config-file migrations-php-set-phpstan-paths-in-config migrations-php-set-phpstan-level-max-in-config migrations-php-set-phpstan-resolve-ergebnis-noExtends-classesAllowedToBeExtended migrations-php-set-phpstan-drop-checkGenericClassInNonGenericObjectType migrations-php-phpstan-add-prefix-for-anything-that-starts-with-vendor-in-a-list migrations-php-set-phpstan-drop-include-test-utilities-rules migrations-php-set-phpstan-drop-include-async-test-utilities-rules migrations-php-set-rector-create-config-if-not-exists migrations-php-composer-unused-create-config-if-not-exists migrations-php-composer-unused-drop-commented-out-line-scattered-across-my-repos migrations-php-move-phpcs migrations-php-move-phpcs-not-dist migrations-php-set-phpcs-ensure-config-file-exists migrations-php-phpcs-make-basepath-is-correct-relatively migrations-php-phpcs-make-cache-is-correct-relatively migrations-php-phpcs-make-sure-config-has-correct-relative-path-for-etc migrations-php-phpcs-make-sure-etc-has-no-trailing-slash migrations-php-phpcs-make-sure-config-has-correct-relative-path-for-src migrations-php-phpcs-make-sure-src-has-no-trailing-slash migrations-php-phpcs-make-sure-config-has-correct-relative-path-for-tests migrations-php-phpcs-make-sure-tests-has-no-trailing-slash migrations-php-phpcs-make-sure-etc-is-ran-through migrations-phpcs-include-examples-directory-when-present migrations-php-move-composer-require-checker migrations-php-composer-require-checker-create-config-if-not-exists migrations-inline-code-phpstan-remove-line-phpstan-ignore-next-line migrations-inline-code-phpstan-remove-rest-of-line-phpstan-ignore-line migrations-inline-code-psalm-remove-line-psalm-suppress migrations-inline-code-remove-line-internal migrations-php-make-sure-github-exists migrations-github-codeowners migrations-php-make-sure-github-workflows-exists migrations-github-actions-remove-composer-diff migrations-github-actions-remove-markdown-check-links migrations-github-actions-remove-markdown-craft-release migrations-github-actions-remove-set-milestone-on-pr migrations-github-actions-move-ci migrations-github-actions-remove-ci-if-its-old-style-php-ci-workflow migrations-github-actions-create-ci-if-not-exists migrations-github-actions-move-release-management migrations-github-actions-fix-management-in-release-management-referenced-workflow-file migrations-github-actions-create-release-management-if-not-exists migrations-renovate-remove-dependabot-config migrations-renovate-move-config migrations-renovate-create-config-if-not-exists migrations-renovate-point-at-correct-config migration-renovate-set-php-constraint migration-renovate-set-composer-constraint syntax-php composer-normalize rector-upgrade cs-fix ## Count: 83
 
 syntax-php: ## Lint PHP syntax ##*ILH*##
 	$(DOCKER_RUN) vendor/bin/parallel-lint --exclude vendor .
 
 composer-normalize: #### Normalize composer.json ##*I*##
 	$(DOCKER_RUN) composer normalize
-	$(DOCKER_RUN) COMPOSER_DISABLE_NETWORK=1 composer update --lock --no-scripts || $(DOCKER_RUN) composer update --lock --no-scripts
+	$(MAKE) update-lock
 
 rector-upgrade: ## Upgrade any automatically upgradable old code ##*I*##
 	$(DOCKER_RUN) vendor/bin/rector -c ./etc/qa/rector.php
 
 cs-fix: ## Fix any automatically fixable code style issues ##*I*##
-	$(DOCKER_RUN) vendor/bin/phpcbf --parallel=1 --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml || $(DOCKER_RUN) vendor/bin/phpcbf --parallel=1 --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml || $(DOCKER_RUN) vendor/bin/phpcbf --parallel=1 --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml -vvvv
+	$(DOCKER_RUN) vendor/bin/phpcbf --parallel=1 --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml || $(MAKE) cs
+
+cs-fix-debug: ## Fix any automatically fixable code style issues, but with debugging output ####
+	$(DOCKER_RUN) vendor/bin/phpcbf --parallel=1 --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml -vvvv
 
 cs: ## Check the code for code style issues ##*LCH*##
-	$(DOCKER_RUN) vendor/bin/phpcs --parallel=1 --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml
+	$(DOCKER_SHELL) vendor/bin/phpcs --parallel=1 --cache=./var/.phpcs.cache.json --standard=./etc/qa/phpcs.xml
 
 stan: ## Run static analysis (PHPStan) ##*LCH*##
-	$(DOCKER_RUN) vendor/bin/phpstan analyse --ansi --configuration=./etc/qa/phpstan.neon
+	$(DOCKER_SHELL) vendor/bin/phpstan analyse --ansi --configuration=./etc/qa/phpstan.neon
 
 unit-testing: ## Run tests ##*A*##
-	$(DOCKER_RUN) vendor/bin/phpunit --colors=always -c ./etc/qa/phpunit.xml $(shell $(DOCKER_RUN) php -r 'if (function_exists("xdebug_get_code_coverage")) { echo " --coverage-text --coverage-html ./var/tests-unit-coverage-html --coverage-clover ./var/tests-unit-clover-coverage.xml"; }')
+	$(DOCKER_RUN_WITH_SOCKET) vendor/bin/phpunit --colors=always -c ./etc/qa/phpunit.xml $(shell $(DOCKER_SHELL) php -r 'if (function_exists("xdebug_get_code_coverage")) { echo " --coverage-text --coverage-html ./var/tests-unit-coverage-html --coverage-clover ./var/tests-unit-clover-coverage.xml"; }')
 
 unit-testing-raw: ## Run tests ##*D*## ####
 	php vendor/phpunit/phpunit/phpunit --colors=always -c ./etc/qa/phpunit.xml $(shell php -r 'if (function_exists("xdebug_get_code_coverage")) { echo " --coverage-text --coverage-html ./var/tests-unit-coverage-html --coverage-clover ./var/tests-unit-clover-coverage.xml"; }')
 
+unit-testing-filter: ## Run tests with specified filter ####
+	$(DOCKER_RUN_WITH_SOCKET) vendor/bin/phpunit --colors=always --filter=$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS)) -c ./etc/qa/phpunit.xml $(shell $(DOCKER_SHELL) php -r 'if (function_exists("xdebug_get_code_coverage")) { echo " --coverage-text --coverage-html ./var/tests-unit-coverage-html --coverage-clover ./var/tests-unit-clover-coverage.xml"; }')
+
 mutation-testing: ## Run mutation testing ##*LCH*##
-	$(DOCKER_RUN) vendor/bin/infection --ansi --log-verbosity=all --ignore-msi-with-no-mutations --configuration=./etc/qa/infection.json5 --static-analysis-tool=phpstan --static-analysis-tool-options="--memory-limit=-1" --threads=$(THREADS) || (cat ./var/infection.log && false)
+	$(DOCKER_RUN_WITH_SOCKET) vendor/bin/infection --ansi --log-verbosity=all --ignore-msi-with-no-mutations --configuration=./etc/qa/infection.json5 --static-analysis-tool=phpstan --static-analysis-tool-options="--memory-limit=-1" --threads=$(THREADS)
 
 mutation-testing-raw: ## Run mutation testing ####
-	vendor/bin/infection --ansi --log-verbosity=all --ignore-msi-with-no-mutations --configuration=./etc/qa/infection.json5 --static-analysis-tool=phpstan --static-analysis-tool-options="--memory-limit=-1" --threads=$(THREADS) || (cat ./var/infection.log && false)
+	vendor/bin/infection --ansi --log-verbosity=all --ignore-msi-with-no-mutations --configuration=./etc/qa/infection.json5 --static-analysis-tool=phpstan --static-analysis-tool-options="--memory-limit=-1" --threads=$(THREADS)
 
 composer-require-checker: ## Ensure we require every package used in this package directly ##*C*##
-	$(DOCKER_RUN) vendor/bin/composer-require-checker --ignore-parse-errors --ansi -vvv --config-file=./etc/qa/composer-require-checker.json
+	$(DOCKER_SHELL) vendor/bin/composer-require-checker --ignore-parse-errors --ansi -vvv --config-file=./etc/qa/composer-require-checker.json
 
 composer-unused: ## Ensure we don't require any package we don't use in this package directly ##*C*##
-	$(DOCKER_RUN) vendor/bin/composer-unused --ansi --configuration=./etc/qa/composer-unused.php
+	$(DOCKER_SHELL) vendor/bin/composer-unused --ansi --configuration=./etc/qa/composer-unused.php
 
 backward-compatibility-check: ## Check code for backwards incompatible changes ##*C*##
 	$(MAKE) backward-compatibility-check-raw || true
 
 backward-compatibility-check-raw: ## Check code for backwards incompatible changes, doesn't ignore the failure ###
-	$(DOCKER_RUN) vendor/bin/roave-backward-compatibility-check
+	$(DOCKER_SHELL) vendor/bin/roave-backward-compatibility-check
 
 install: ### Install dependencies ####
-	$(DOCKER_RUN) composer install
+	$(DOCKER_SHELL) composer install
+
+composer-require: ### Require passed dependencies ####
+	$(DOCKER_SHELL) composer require -W $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
 update: ### Update dependencies ####
-	$(DOCKER_RUN) composer update -W
+	$(DOCKER_SHELL) composer update -W
+
+update-lock: ### Update lockfile ####
+	$(DOCKER_RUN) COMPOSER_DISABLE_NETWORK=1 composer update --lock --no-scripts || $(DOCKER_RUN) composer update --lock --no-scripts
 
 outdated: ### Show outdated dependencies ####
-	$(DOCKER_RUN) composer outdated
+	$(DOCKER_SHELL) composer outdated
+
+composer-show: ### Show dependencies ####
+	$(DOCKER_SHELL) composer show
 
 shell: ## Provides Shell access in the expected environment ####
-	$(DOCKER_RUN) bash
+	$(DOCKER_SHELL) bash
 
 help: ## Show this help ####
 	@printf "\033[33mUsage:\033[0m\n  make [target]\n\n\033[33mTargets:\033[0m\n"
