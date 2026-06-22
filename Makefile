@@ -28,23 +28,27 @@ ifeq ("$(IN_DOCKER)","TRUE")
 	DOCKER_INTERACTIVE_SHELL:=
 else
     ifeq ($(DOCKER_AVAILABLE),0)
-        DOCKER_COMMON_OPS:=-v "`pwd`:`pwd`" -w "`pwd`" -v "${COMPOSER_CACHE_DIR}:${COMPOSER_CONTAINER_CACHE_DIR}"  -e OTEL_PHP_FIBERS_ENABLED="${OTEL_PHP_FIBERS_ENABLED}" --ulimit nofile=1000000
+        DOCKER_DEFAULT_SECURITY_OPS=--cap-drop=ALL --security-opt="no-new-privileges=true" --user="`id -u`:`id -g`"
+        DOCKER_COMMON_OPS:=-v "`pwd`:`pwd`" -w "`pwd`" -v "`pwd`/.git:`pwd`/.git:ro" -v "${COMPOSER_CACHE_DIR}:${COMPOSER_CONTAINER_CACHE_DIR}"  -e OTEL_PHP_FIBERS_ENABLED="${OTEL_PHP_FIBERS_ENABLED}" --ulimit nofile=1000000
         ifeq ("$(NEEDS_DOCKER_SOCKET)","TRUE")
             ifneq ("$(wildcard /var/run/docker.sock)","")
+                DOCKER_SECURITY_OPS:=
                 DOCKER_SOCKET_OPS:=-v "/var/run/docker.sock:/var/run/docker.sock"
                 DOCKER_SOCKET_CONTAINER_NAME_SUFFIX:=-root
             else
+                DOCKER_SECURITY_OPS:=${DOCKER_DEFAULT_SECURITY_OPS}
                 DOCKER_SOCKET_OPS:=
                 DOCKER_SOCKET_CONTAINER_NAME_SUFFIX:=
             endif
         else
+            DOCKER_SECURITY_OPS:=${DOCKER_DEFAULT_SECURITY_OPS}
             DOCKER_SOCKET_OPS:=
             DOCKER_SOCKET_CONTAINER_NAME_SUFFIX:=
         endif
-        DOCKER_RUN:=docker run --rm -i ${DOCKER_COMMON_OPS} "${CONTAINER_NAME}"
-        DOCKER_RUN_WITH_SOCKET:=docker run --rm -i ${DOCKER_COMMON_OPS} ${DOCKER_SOCKET_OPS} "${CONTAINER_NAME}${DOCKER_SOCKET_CONTAINER_NAME_SUFFIX}"
-        DOCKER_SHELL:=docker run --rm -it ${DOCKER_COMMON_OPS} "${CONTAINER_NAME}"
-        DOCKER_INTERACTIVE_SHELL:=docker run --rm -it ${DOCKER_COMMON_OPS} "${CONTAINER_NAME_INTERACTIVE_SHELL}"
+        DOCKER_RUN:=docker run --rm -i ${DOCKER_SECURITY_OPS} ${DOCKER_COMMON_OPS} "${CONTAINER_NAME}"
+        DOCKER_RUN_WITH_SOCKET:=docker run --rm -i ${DOCKER_SECURITY_OPS} ${DOCKER_COMMON_OPS} ${DOCKER_SOCKET_OPS} "${CONTAINER_NAME}${DOCKER_SOCKET_CONTAINER_NAME_SUFFIX}"
+        DOCKER_SHELL:=docker run --rm -it ${DOCKER_SECURITY_OPS} ${DOCKER_COMMON_OPS} "${CONTAINER_NAME}"
+        DOCKER_INTERACTIVE_SHELL:=docker run --rm -it ${DOCKER_SECURITY_OPS} ${DOCKER_COMMON_OPS} "${CONTAINER_NAME_INTERACTIVE_SHELL}"
     else
         DOCKER_RUN:=
         DOCKER_RUN_WITH_SOCKET:=
@@ -407,6 +411,9 @@ install: ### Install dependencies ####
 
 composer-require: ### Require passed dependencies ####
 	$(DOCKER_INTERACTIVE_SHELL) composer require -W $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+
+composer-why: ### Show why a specific dependency is loaded ####
+	$(DOCKER_INTERACTIVE_SHELL) composer why $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
 update: ### Update dependencies ####
 	$(DOCKER_SHELL) composer update -W
