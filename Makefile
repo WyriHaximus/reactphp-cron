@@ -29,7 +29,9 @@ ifeq ("$(IN_DOCKER)","TRUE")
 else
     ifeq ($(DOCKER_AVAILABLE),0)
         DOCKER_DEFAULT_SECURITY_OPS=--cap-drop=ALL --security-opt="no-new-privileges=true" --user="`id -u`:`id -g`"
-        DOCKER_COMMON_OPS:=-v "`pwd`:`pwd`" -w "`pwd`" -v "`pwd`/.git:`pwd`/.git:ro" -v "${COMPOSER_CACHE_DIR}:${COMPOSER_CONTAINER_CACHE_DIR}"  -e OTEL_PHP_FIBERS_ENABLED="${OTEL_PHP_FIBERS_ENABLED}" --ulimit nofile=1000000
+        DOCKER_COMMON_OPS:=-v "`pwd`:`pwd`" -w "`pwd`" -v "`pwd`/.git:`pwd`/.git:ro" -v "${COMPOSER_CACHE_DIR}:${COMPOSER_CONTAINER_CACHE_DIR}" --ulimit nofile=1000000
+        DOCKER_COMMON_NON_INTERACTIVE_OPS:=-e OTEL_PHP_FIBERS_ENABLED="${OTEL_PHP_FIBERS_ENABLED}"
+        DOCKER_COMMON_INTERACTIVE_OPS:=-e OTEL_PHP_FIBERS_ENABLED="false"
         ifeq ("$(NEEDS_DOCKER_SOCKET)","TRUE")
             ifneq ("$(wildcard /var/run/docker.sock)","")
                 DOCKER_SECURITY_OPS:=
@@ -45,10 +47,10 @@ else
             DOCKER_SOCKET_OPS:=
             DOCKER_SOCKET_CONTAINER_NAME_SUFFIX:=
         endif
-        DOCKER_RUN:=docker run --rm -i ${DOCKER_SECURITY_OPS} ${DOCKER_COMMON_OPS} "${CONTAINER_NAME}"
-        DOCKER_RUN_WITH_SOCKET:=docker run --rm -i ${DOCKER_SECURITY_OPS} ${DOCKER_COMMON_OPS} ${DOCKER_SOCKET_OPS} "${CONTAINER_NAME}${DOCKER_SOCKET_CONTAINER_NAME_SUFFIX}"
-        DOCKER_SHELL:=docker run --rm -it ${DOCKER_SECURITY_OPS} ${DOCKER_COMMON_OPS} "${CONTAINER_NAME}"
-        DOCKER_INTERACTIVE_SHELL:=docker run --rm -it ${DOCKER_SECURITY_OPS} ${DOCKER_COMMON_OPS} "${CONTAINER_NAME_INTERACTIVE_SHELL}"
+        DOCKER_RUN:=docker run --rm -i ${DOCKER_SECURITY_OPS} ${DOCKER_COMMON_NON_INTERACTIVE_OPS} ${DOCKER_COMMON_OPS} "${CONTAINER_NAME}"
+        DOCKER_RUN_WITH_SOCKET:=docker run --rm -i ${DOCKER_SECURITY_OPS} ${DOCKER_COMMON_NON_INTERACTIVE_OPS} ${DOCKER_COMMON_OPS} ${DOCKER_SOCKET_OPS} "${CONTAINER_NAME}${DOCKER_SOCKET_CONTAINER_NAME_SUFFIX}"
+        DOCKER_SHELL:=docker run --rm -it ${DOCKER_SECURITY_OPS} ${DOCKER_COMMON_NON_INTERACTIVE_OPS} ${DOCKER_COMMON_OPS} "${CONTAINER_NAME}"
+        DOCKER_INTERACTIVE_SHELL:=docker run --rm -it ${DOCKER_SECURITY_OPS} ${DOCKER_COMMON_INTERACTIVE_OPS} ${DOCKER_COMMON_OPS} "${CONTAINER_NAME_INTERACTIVE_SHELL}"
     else
         DOCKER_RUN:=
         DOCKER_RUN_WITH_SOCKET:=
@@ -104,40 +106,40 @@ migrations-docs-update-license-copyright-c-year-to-current: #### Update license 
 migrations-docs-update-license-copyright-year-to-current: #### Update license copyright year to current ##*I*##
 	($(DOCKER_RUN) php -r '$$licenseFile = "LICENSE"; $$copyRight = "Copyright "; $$currentYear = date("Y"); if (!file_exists($$licenseFile)) {exit;} $$licenseContents = file_get_contents($$licenseFile); foreach (range(2000, 2100) as $$year) { $$licenseContents = str_replace($$copyRight . $$year,  $$copyRight . $$currentYear, $$licenseContents); } file_put_contents($$licenseFile, $$licenseContents); ' || true)
 
-migrations-php-make-sure-var-exists: #### Make sure var/ exists ##*I*##
+migrations-php-make-sure-var-exists: #### Make sure `var/` exists ##*I*##
 	($(DOCKER_RUN) mkdir var || true)
 
-migrations-php-make-sure-var-gitkeep-exists: #### Make sure var/.gitkeep exists ##*I*##
+migrations-php-make-sure-var-gitkeep-exists: #### Make sure `var/.gitkeep` exists ##*I*##
 	($(DOCKER_RUN) touch var/.gitkeep || true)
 
-migrations-php-make-sure-etc-exists: #### Make sure etc/ exists ##*I*##
+migrations-php-make-sure-etc-exists: #### Make sure `etc/` exists ##*I*##
 	($(DOCKER_RUN) mkdir etc || true)
 
-migrations-php-make-sure-etc-ci-exists: #### Make sure etc/ci/ exists ##*I*##
+migrations-php-make-sure-etc-ci-exists: #### Make sure `etc/ci/` exists ##*I*##
 	($(DOCKER_RUN) mkdir etc/ci || true)
 
-migrations-php-make-sure-etc-qa-exists: #### Make sure etc/qa/ exists ##*I*##
+migrations-php-make-sure-etc-qa-exists: #### Make sure `etc/qa/` exists ##*I*##
 	($(DOCKER_RUN) mkdir etc/qa || true)
 
-migrations-php-move-psalm-xml-config-to-etc: #### Move psalm.xml to etc/qa/psalm.xml ##*I*##
+migrations-php-move-psalm-xml-config-to-etc: #### Move `psalm.xml` to `etc/qa/psalm.xml` ##*I*##
 	($(DOCKER_RUN) mv psalm.xml etc/qa/psalm.xml || true)
 
-migrations-php-remove-psalm-xml-config: #### Make sure we remove etc/qa/psalm.xml ##*I*##
+migrations-php-remove-psalm-xml-config: #### Make sure we remove `etc/qa/psalm.xml` ##*I*##
 	($(DOCKER_RUN) rm etc/qa/psalm.xml || true)
 
-migrations-php-remove-old-phpunit-xml-dist-config: #### Make sure we remove phpunit.xml.dist ##*I*##
+migrations-php-remove-old-phpunit-xml-dist-config: #### Make sure we remove `phpunit.xml.dist` ##*I*##
 	($(DOCKER_RUN) rm phpunit.xml.dist || true)
 
-migrations-php-remove-old-phpunit-xml-config: #### Make sure we remove phpunit.xml ##*I*##
+migrations-php-remove-old-phpunit-xml-config: #### Make sure we remove `phpunit.xml` ##*I*##
 	($(DOCKER_RUN) rm phpunit.xml || true)
 
-migrations-php-remove-old-php-cs-fiver-config: #### Make sure we remove .php_cs ##*I*##
+migrations-php-remove-old-php-cs-fiver-config: #### Make sure we remove `.php_cs` ##*I*##
 	($(DOCKER_RUN) rm .php_cs || true)
 
-migrations-php-remove-old-scrutinizer-yml-config: #### Make sure we remove .scrutinizer.yml ##*I*##
+migrations-php-remove-old-scrutinizer-yml-config: #### Make sure we remove `.scrutinizer.yml` ##*I*##
 	($(DOCKER_RUN) rm .scrutinizer.yml || true)
 
-migrations-php-remove-old-appveyor-yml-config: #### Make sure we remove appveyor.yml ##*I*##
+migrations-php-remove-old-appveyor-yml-config: #### Make sure we remove `appveyor.yml` ##*I*##
 	($(DOCKER_RUN) rm appveyor.yml || true)
 
 migrations-php-ensure-etc-ci-markdown-link-checker-json-exists: #### Make sure we have etc/ci/markdown-link-checker.json ##*I*##
@@ -223,6 +225,9 @@ migrations-php-composer-unused-create-config-if-not-exists: #### Create Composer
 
 migrations-php-composer-unused-drop-commented-out-line-scattered-across-my-repos: #### Update Composer Unused config file dropping a commented out line that is scattered cross my repos ##*I*##
 	($(DOCKER_RUN) php -r '$$composerUnusedConfigFile = "etc/qa/composer-unused.php"; if (!file_exists($$composerUnusedConfigFile)) {exit;} $$php = file_get_contents($$composerUnusedConfigFile); if (!is_string($$php)) {exit;} $$php = str_replace(base64_decode("Ly8gICAgICAgIC0+YWRkTmFtZWRGaWx0ZXIoTmFtZWRGaWx0ZXI6OmZyb21TdHJpbmcoJ3d5cmloYXhpbXVzL3BocHN0YW4tcnVsZXMtd3JhcHBlcicpKTs="), "", $$php); file_put_contents($$composerUnusedConfigFile, $$php);' || true)
+
+migrations-php-migrate-composer-unused-from-extra-unused-to-etc-qa-composer-used-php: #### Migrate Compose Unused from composer.json extra unused to etc/qa/composer-unused.php ##*I*##
+	($(DOCKER_RUN) php -r '$$composerJsonFile = "composer.json"; $$composerUnusedFile = "etc/qa/composer-unused.php"; if (!file_exists($$composerJsonFile)) {exit;} $$json = json_decode(file_get_contents($$composerJsonFile), true); if (!is_array($$json)) {exit;}  if (!array_key_exists("extra", $$json)) {exit;} if (!array_key_exists("unused", $$json["extra"])) {exit;} foreach ($$json["extra"]["unused"] as $$unusedPAckage) { file_put_contents($$composerUnusedFile, str_replace(base64_decode("cmV0dXJuIHN0YXRpYyBmbiAoQ29uZmlndXJhdGlvbiAkY29uZmlnKTogQ29uZmlndXJhdGlvbiA9PiAkY29uZmln"), base64_decode("cmV0dXJuIHN0YXRpYyBmbiAoQ29uZmlndXJhdGlvbiAkY29uZmlnKTogQ29uZmlndXJhdGlvbiA9PiAkY29uZmln") . "\r\n" . base64_decode("ICAgIC0+YWRkTmFtZWRGaWx0ZXIoXENvbXBvc2VyVW51c2VkXENvbXBvc2VyVW51c2VkXENvbmZpZ3VyYXRpb25cTmFtZWRGaWx0ZXI6OmZyb21TdHJpbmcoJw==") . $$unusedPAckage . base64_decode("Jykp"), file_get_contents($$composerUnusedFile))); } unset($$json["extra"]["unused"]); file_put_contents($$composerJsonFile, json_encode($$json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\r\n");' || true)
 
 migrations-php-move-phpcs: #### Move phpcs.xml.dist to etc/qa/phpcs.xml ##*I*##
 	($(DOCKER_RUN) mv phpcs.xml.dist etc/qa/phpcs.xml || true)
@@ -361,7 +366,7 @@ migration-renovate-set-composer-constraint: #### Always keep renovate's constrai
 ## Our default jobs
 
 on-install-or-update: ## Tasks, like migrations, that specifically have be run after composer install or update. These will also run by self hosted Renovate ####
-	$(DOCKER_RUN) $(MAKE) migrations-git-enforce-gitattributes-contents migrations-git-make-sure-gitignore-exists migrations-git-make-sure-gitignore-ignores-var migrations-git-make-sure-gitignore-excludes-var-gitkeep migrations-docs-update-readme-copyright-c-year-to-current migrations-docs-update-readme-copyright-year-to-current migrations-docs-update-etc-readme-template-copyright-c-year-to-current migrations-docs-update-etc-readme-template-copyright-year-to-current migrations-docs-create-license-when-it-doesnt-exists migrations-docs-update-license-copyright-c-year-to-current migrations-docs-update-license-copyright-year-to-current migrations-php-make-sure-var-exists migrations-php-make-sure-var-gitkeep-exists migrations-php-make-sure-etc-exists migrations-php-make-sure-etc-ci-exists migrations-php-make-sure-etc-qa-exists migrations-php-move-psalm-xml-config-to-etc migrations-php-remove-psalm-xml-config migrations-php-remove-old-phpunit-xml-dist-config migrations-php-remove-old-phpunit-xml-config migrations-php-remove-old-scrutinizer-yml-config migrations-php-remove-old-appveyor-yml-config migrations-php-ensure-etc-ci-markdown-link-checker-json-exists migrations-php-move-infection-config-to-etc migrations-php-infection-create-config-if-not-exists migrations-php-remove-phpunit-config-dir-from-infection migrations-php-fix-logs-relative-paths-for-infection migrations-php-infection-ensure-log-text-has-the-correct-path migrations-php-infection-ensure-log-summary-has-the-correct-path migrations-php-infection-ensure-log-json-has-the-correct-path migrations-php-infection-ensure-log-per-mutator-has-the-correct-path migrations-php-add-github-true-to-for-infection migrations-php-make-paths-compatible-with-infection-0-32 migrations-php-set-phpunit-ensure-config-file-exists migrations-php-set-phpunit-xsd-path-to-local migrations-php-set-phpunit-make-sure-we-see-all-the-warnings-deprecations-etc-etc-that-will-make-phpunit-do-a-non-happy-exit migrations-php-move-phpstan migrations-php-set-phpstan-ensure-config-file-exists migrations-php-set-phpstan-uncomment-parameters migrations-php-set-phpstan-add-parameters-if-it-isnt-present-in-the-config-file migrations-php-set-phpstan-paths-in-config migrations-php-set-phpstan-level-max-in-config migrations-php-set-phpstan-resolve-ergebnis-noExtends-classesAllowedToBeExtended migrations-php-set-phpstan-drop-checkGenericClassInNonGenericObjectType migrations-php-phpstan-add-prefix-for-anything-that-starts-with-vendor-in-a-list migrations-php-set-phpstan-drop-include-test-utilities-rules migrations-php-set-phpstan-drop-include-async-test-utilities-rules migrations-php-set-rector-create-config-if-not-exists migrations-php-composer-unused-create-config-if-not-exists migrations-php-composer-unused-drop-commented-out-line-scattered-across-my-repos migrations-php-move-phpcs migrations-php-move-phpcs-not-dist migrations-php-set-phpcs-ensure-config-file-exists migrations-php-phpcs-make-basepath-is-correct-relatively migrations-php-phpcs-make-cache-is-correct-relatively migrations-php-phpcs-make-sure-config-has-correct-relative-path-for-etc migrations-php-phpcs-make-sure-etc-has-no-trailing-slash migrations-php-phpcs-make-sure-config-has-correct-relative-path-for-src migrations-php-phpcs-make-sure-src-has-no-trailing-slash migrations-php-phpcs-make-sure-config-has-correct-relative-path-for-tests migrations-php-phpcs-make-sure-tests-has-no-trailing-slash migrations-php-phpcs-make-sure-etc-is-ran-through migrations-phpcs-include-examples-directory-when-present migrations-php-move-composer-require-checker migrations-php-composer-require-checker-create-config-if-not-exists migrations-inline-code-phpstan-remove-line-phpstan-ignore-next-line migrations-inline-code-phpstan-remove-rest-of-line-phpstan-ignore-line migrations-inline-code-psalm-remove-line-psalm-suppress migrations-inline-code-remove-line-internal migrations-supported-features-php-ensure-we-only-cs-check-and-fix-tests-if-unit-tests-is-enabled migrations-supported-features-php-ensure-we-only-staticly-analyse-tests-with-phpstan-if-unit-tests-is-enabled migrations-supported-features-php-ensure-no-phpunit-config-file-is-present-when-unit-tests-are-disabled migrations-supported-features-php-ensure-no-infectionphp-config-file-is-present-when-unit-tests-are-disabled migrations-supported-features-php-ensure-no-rector-config-file-is-present-when-code-style-is-disabled migrations-supported-features-php-ensure-no-phpcs-config-file-is-present-when-code-style-is-disabled migrations-php-make-sure-github-exists migrations-github-codeowners migrations-php-make-sure-github-workflows-exists migrations-github-actions-remove-composer-diff migrations-github-actions-remove-markdown-check-links migrations-github-actions-remove-markdown-craft-release migrations-github-actions-remove-set-milestone-on-pr migrations-github-actions-move-ci migrations-github-actions-remove-ci-if-its-old-style-php-ci-workflow migrations-github-actions-create-ci-if-not-exists migrations-github-actions-move-release-management migrations-github-actions-fix-management-in-release-management-referenced-workflow-file migrations-github-actions-create-release-management-if-not-exists migrations-renovate-remove-dependabot-config migrations-renovate-move-config migrations-renovate-create-config-if-not-exists migrations-renovate-point-at-correct-config migration-renovate-set-php-constraint migration-renovate-set-composer-constraint composer-validate syntax-php composer-normalize rector-upgrade cs-fix ## Count: 99
+	$(DOCKER_RUN) $(MAKE) migrations-git-enforce-gitattributes-contents migrations-git-make-sure-gitignore-exists migrations-git-make-sure-gitignore-ignores-var migrations-git-make-sure-gitignore-excludes-var-gitkeep migrations-docs-update-readme-copyright-c-year-to-current migrations-docs-update-readme-copyright-year-to-current migrations-docs-update-etc-readme-template-copyright-c-year-to-current migrations-docs-update-etc-readme-template-copyright-year-to-current migrations-docs-create-license-when-it-doesnt-exists migrations-docs-update-license-copyright-c-year-to-current migrations-docs-update-license-copyright-year-to-current migrations-php-make-sure-var-exists migrations-php-make-sure-var-gitkeep-exists migrations-php-make-sure-etc-exists migrations-php-make-sure-etc-ci-exists migrations-php-make-sure-etc-qa-exists migrations-php-move-psalm-xml-config-to-etc migrations-php-remove-psalm-xml-config migrations-php-remove-old-phpunit-xml-dist-config migrations-php-remove-old-phpunit-xml-config migrations-php-remove-old-php-cs-fiver-config migrations-php-remove-old-scrutinizer-yml-config migrations-php-remove-old-appveyor-yml-config migrations-php-ensure-etc-ci-markdown-link-checker-json-exists migrations-php-move-infection-config-to-etc migrations-php-infection-create-config-if-not-exists migrations-php-remove-phpunit-config-dir-from-infection migrations-php-fix-logs-relative-paths-for-infection migrations-php-infection-ensure-log-text-has-the-correct-path migrations-php-infection-ensure-log-summary-has-the-correct-path migrations-php-infection-ensure-log-json-has-the-correct-path migrations-php-infection-ensure-log-per-mutator-has-the-correct-path migrations-php-add-github-true-to-for-infection migrations-php-make-paths-compatible-with-infection-0-32 migrations-php-set-phpunit-ensure-config-file-exists migrations-php-set-phpunit-xsd-path-to-local migrations-php-set-phpunit-make-sure-we-see-all-the-warnings-deprecations-etc-etc-that-will-make-phpunit-do-a-non-happy-exit migrations-php-move-phpstan migrations-php-set-phpstan-ensure-config-file-exists migrations-php-set-phpstan-uncomment-parameters migrations-php-set-phpstan-add-parameters-if-it-isnt-present-in-the-config-file migrations-php-set-phpstan-paths-in-config migrations-php-set-phpstan-level-max-in-config migrations-php-set-phpstan-resolve-ergebnis-noExtends-classesAllowedToBeExtended migrations-php-set-phpstan-drop-checkGenericClassInNonGenericObjectType migrations-php-phpstan-add-prefix-for-anything-that-starts-with-vendor-in-a-list migrations-php-set-phpstan-drop-include-test-utilities-rules migrations-php-set-phpstan-drop-include-async-test-utilities-rules migrations-php-set-rector-create-config-if-not-exists migrations-php-composer-unused-create-config-if-not-exists migrations-php-composer-unused-drop-commented-out-line-scattered-across-my-repos migrations-php-migrate-composer-unused-from-extra-unused-to-etc-qa-composer-used-php migrations-php-move-phpcs migrations-php-move-phpcs-not-dist migrations-php-set-phpcs-ensure-config-file-exists migrations-php-phpcs-make-basepath-is-correct-relatively migrations-php-phpcs-make-cache-is-correct-relatively migrations-php-phpcs-make-sure-config-has-correct-relative-path-for-etc migrations-php-phpcs-make-sure-etc-has-no-trailing-slash migrations-php-phpcs-make-sure-config-has-correct-relative-path-for-src migrations-php-phpcs-make-sure-src-has-no-trailing-slash migrations-php-phpcs-make-sure-config-has-correct-relative-path-for-tests migrations-php-phpcs-make-sure-tests-has-no-trailing-slash migrations-php-phpcs-make-sure-etc-is-ran-through migrations-phpcs-include-examples-directory-when-present migrations-php-move-composer-require-checker migrations-php-composer-require-checker-create-config-if-not-exists migrations-inline-code-phpstan-remove-line-phpstan-ignore-next-line migrations-inline-code-phpstan-remove-rest-of-line-phpstan-ignore-line migrations-inline-code-psalm-remove-line-psalm-suppress migrations-inline-code-remove-line-internal migrations-supported-features-php-ensure-we-only-cs-check-and-fix-tests-if-unit-tests-is-enabled migrations-supported-features-php-ensure-we-only-staticly-analyse-tests-with-phpstan-if-unit-tests-is-enabled migrations-supported-features-php-ensure-no-phpunit-config-file-is-present-when-unit-tests-are-disabled migrations-supported-features-php-ensure-no-infectionphp-config-file-is-present-when-unit-tests-are-disabled migrations-supported-features-php-ensure-no-rector-config-file-is-present-when-code-style-is-disabled migrations-supported-features-php-ensure-no-phpcs-config-file-is-present-when-code-style-is-disabled migrations-php-make-sure-github-exists migrations-github-codeowners migrations-php-make-sure-github-workflows-exists migrations-github-actions-remove-composer-diff migrations-github-actions-remove-markdown-check-links migrations-github-actions-remove-markdown-craft-release migrations-github-actions-remove-set-milestone-on-pr migrations-github-actions-move-ci migrations-github-actions-remove-ci-if-its-old-style-php-ci-workflow migrations-github-actions-create-ci-if-not-exists migrations-github-actions-move-release-management migrations-github-actions-fix-management-in-release-management-referenced-workflow-file migrations-github-actions-create-release-management-if-not-exists migrations-renovate-remove-dependabot-config migrations-renovate-move-config migrations-renovate-create-config-if-not-exists migrations-renovate-point-at-correct-config migration-renovate-set-php-constraint migration-renovate-set-composer-constraint composer-validate syntax-php composer-normalize rector-upgrade cs-fix ## Count: 101
 
 composer-validate: ## Ensure we don't require any package we don't use in this package directly ##*IC*##
 	$(DOCKER_SHELL) composer validate
@@ -423,6 +428,9 @@ composer-require: ### Require passed dependencies ####
 
 composer-why: ### Show why a specific dependency is loaded ####
 	$(DOCKER_INTERACTIVE_SHELL) composer why $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+
+composer-outdated: ### Show outdated packages ####
+	$(DOCKER_SHELL) composer outdated
 
 update: ### Update dependencies ####
 	$(DOCKER_SHELL) composer update -W
