@@ -11,4 +11,14 @@
     <file>../../tests</file>
 
     <rule ref="WyriHaximus-OSS" />
+
+    <rule ref="SlevomatCodingStandard.TypeHints.ParameterTypeHint">
+        <exclude-pattern>tests/EventLoopStub.php</exclude-pattern>
+    </rule>
+    <rule ref="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint">
+        <exclude-pattern>tests/EventLoopStub.php</exclude-pattern>
+    </rule>
+    <rule ref="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint">
+        <exclude-pattern>tests/StubTimer.php</exclude-pattern>
+    </rule>
 </ruleset>
