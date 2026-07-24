@@ -16,7 +16,6 @@ use ReflectionProperty;
 use RuntimeException;
 use Throwable;
 use WyriHaximus\AsyncTestUtilities\AsyncTestCase;
-use WyriHaximus\AsyncTestUtilities\TimeOut;
 use WyriHaximus\React\Cron;
 use WyriHaximus\React\Cron\Action;
 use WyriHaximus\React\Cron\ActionInterface;
@@ -27,13 +26,12 @@ use WyriHaximus\React\Mutex\Memory;
 use function array_filter;
 use function array_first;
 use function array_shift;
-use function count;
 use function is_callable;
-use function React\Async\await;
 
-#[TimeOut(69)]
 final class CronFunctionalTest extends AsyncTestCase
 {
+    private EventLoopStub $loop;
+
     /** @return iterable<string, array<mixed>> */
     public static function provideFactoryMethods(): iterable
     {
@@ -100,18 +98,21 @@ final class CronFunctionalTest extends AsyncTestCase
     #[DataProvider('provideFactoryMethods')]
     public function scheduling(string $factoryMethod, array $args, FrozenClock $clock, bool $overRideClock, callable ...$clockTicks): void
     {
-        self::handleClockTicks($clock, ...$clockTicks);
+        $this->setUpLoop($clock);
+        $this->handleClockTicks($clock, ...$clockTicks);
 
         $ran      = false;
         $ranTimes = 0;
         /** @var ?Cron $cron */
         $cron     = null;
         $deferred = new Deferred();
-        $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
+        $action   = new Action('name', 0.1, '* * * * *', function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
             $ran = true;
             $ranTimes++;
 
             if ($ranTimes < 2) {
+                $this->loop->adjustClock('+1 minute');
+
                 return;
             }
 
@@ -125,7 +126,7 @@ final class CronFunctionalTest extends AsyncTestCase
             $this->overRideClock($cron, $clock);
         }
 
-        await($deferred->promise());
+        $this->runUntilDeferred($deferred);
 
         self::assertTrue($ran);
         self::assertSame(2, $ranTimes);
@@ -136,18 +137,21 @@ final class CronFunctionalTest extends AsyncTestCase
     #[DataProvider('provideFactoryMethods')]
     public function mutexLockOnlyAllowsTheSameActionOnce(string $factoryMethod, array $args, FrozenClock $clock, bool $overRideClock, callable ...$clockTicks): void
     {
-        self::handleClockTicks($clock, ...$clockTicks);
+        $this->setUpLoop($clock);
+        $this->handleClockTicks($clock, ...$clockTicks);
 
         $ran      = false;
         $ranTimes = 0;
         /** @var ?Cron $cron */
         $cron     = null;
         $deferred = new Deferred();
-        $action   = new Action('name', 0.1, '* * * * *', static function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
+        $action   = new Action('name', 0.1, '* * * * *', function () use (&$ran, &$ranTimes, &$cron, $deferred): void {
             $ran = true;
             $ranTimes++;
 
             if ($ranTimes < 2) {
+                $this->loop->adjustClock('+1 minute');
+
                 return;
             }
 
@@ -162,7 +166,7 @@ final class CronFunctionalTest extends AsyncTestCase
             $this->overRideClock($cron, $clock);
         }
 
-        await($deferred->promise());
+        $this->runUntilDeferred($deferred);
 
         self::assertTrue($ran);
         self::assertSame(2, $ranTimes);
@@ -173,7 +177,8 @@ final class CronFunctionalTest extends AsyncTestCase
     #[DataProvider('provideFactoryMethods')]
     public function exceptionForwarding(string $factoryMethod, array $args, FrozenClock $clock, bool $overRideClock, callable ...$clockTicks): void
     {
-        self::handleClockTicks($clock, ...$clockTicks);
+        $this->setUpLoop($clock);
+        $this->handleClockTicks($clock, ...$clockTicks);
 
         $error = null;
         $ran   = false;
@@ -200,7 +205,7 @@ final class CronFunctionalTest extends AsyncTestCase
             $error = $throwable;
         });
 
-        await($deferred->promise());
+        $this->runUntilDeferred($deferred);
 
         self::assertTrue($ran);
         self::assertInstanceOf(RuntimeException::class, $error);
@@ -212,7 +217,8 @@ final class CronFunctionalTest extends AsyncTestCase
     #[DataProvider('provideFactoryMethods')]
     public function runOnStartUp(string $factoryMethod, array $args, FrozenClock $clock, bool $overRideClock, callable ...$clockTicks): void
     {
-        self::handleClockTicks($clock, ...$clockTicks);
+        $this->setUpLoop($clock);
+        $this->handleClockTicks($clock, ...$clockTicks);
 
         $ran      = false;
         $ranTimes = 0;
@@ -228,10 +234,30 @@ final class CronFunctionalTest extends AsyncTestCase
 
         $args[] = $action;
         $cron   = $this->cronFactory($factoryMethod, ...$args);
-        await($deferred->promise());
+        if ($overRideClock) {
+            $this->overRideClock($cron, $clock);
+        }
+
+        $this->runUntilDeferred($deferred);
 
         self::assertTrue($ran);
         self::assertSame(1, $ranTimes);
+    }
+
+    /** @param Deferred<mixed> $deferred */
+    private function runUntilDeferred(Deferred $deferred): void
+    {
+        $deferred->promise()->then(static function (): void {
+            Loop::stop();
+        });
+
+        $this->loop->run();
+    }
+
+    private function setUpLoop(FrozenClock $clock): void
+    {
+        $this->loop = new EventLoopStub($clock);
+        Loop::set($this->loop);
     }
 
     private function cronFactory(string $factoryMethod, ClockInterface|MutexInterface|ActionInterface ...$args): Cron
@@ -279,20 +305,20 @@ final class CronFunctionalTest extends AsyncTestCase
         return $clock;
     }
 
-    private static function handleClockTicks(FrozenClock $clock, callable ...$clockTicks): void
+    private function handleClockTicks(FrozenClock $clock, callable ...$clockTicks): void
     {
-        Loop::futureTick(static function () use ($clock, $clockTicks): void {
+        Loop::futureTick(function () use ($clock, $clockTicks): void {
             $clockTick = array_shift($clockTicks);
 
             if (is_callable($clockTick)) {
                 $clockTick($clock);
             }
 
-            if (count($clockTicks) <= 0) {
+            if ($clockTicks === []) {
                 return;
             }
 
-            self::handleClockTicks($clock, ...$clockTicks);
+            $this->handleClockTicks($clock, ...$clockTicks);
         });
     }
 }

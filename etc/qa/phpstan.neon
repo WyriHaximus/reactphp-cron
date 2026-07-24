@@ -4,3 +4,7 @@ parameters:
 		- ../../etc
 		- ../../src
 		- ../../tests
+	ignoreErrors:
+		-
+			message: '#Call to internal static method React\\EventLoop\\Loop::set\(\)#'
+			path: ../../tests/CronFunctionalTest.php
