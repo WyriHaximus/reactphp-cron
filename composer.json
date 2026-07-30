@@ -15,7 +15,7 @@
     "wyrihaximus/react-mutex-contracts": "^2.3"
   },
   "require-dev": {
-    "wyrihaximus/async-test-utilities": "^13.4.1",
+    "wyrihaximus/async-test-utilities": "^13.5.0",
     "wyrihaximus/makefiles": "^0.13.3"
   },
   "conflict": {
