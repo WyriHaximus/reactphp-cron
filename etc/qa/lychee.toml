@@ -1,0 +1,6 @@
+verbose = "warn"
+no_progress = true
+exclude_path = ["^var/", "^vendor/", "^\\.git/"]
+
+[hosts."docs.github.com"]
+headers = { Accept-Encoding = "zstd, br, gzip, deflate" }
