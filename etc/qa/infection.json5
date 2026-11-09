@@ -28,5 +28,6 @@
         "PublicVisibility": false,
         "FunctionCallRemoval": false,
         "Identical": false
-    }
+    },
+    "threads": 64
 }
